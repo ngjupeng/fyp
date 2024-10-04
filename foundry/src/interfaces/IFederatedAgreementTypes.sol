@@ -6,7 +6,7 @@ interface IFederatedAgreementTypes {
     enum FederatedAgreementStatus {
         PENDING,
         RUNNING,
-        ENDED
+        FINISHED
     }
 
     enum ProposalStatus {
@@ -47,6 +47,14 @@ interface IFederatedAgreementTypes {
 
     event ProposalFinalized(uint256 indexed proposalId, uint256 indexed proposalRound, bool isAccepted);
 
+    event ProceedNextRound(uint256 indexed round);
+
+    event AgreementFinished(uint256 indexed round);
+
+    event RewardsRedeemed(address indexed participant, uint256 indexed round, uint256 amount);
+
+    event CollateralRedeemed(address indexed participant, uint256 amount);
+
     // ************************************
     // ************ ERRORs ****************
     // ************************************
@@ -62,4 +70,8 @@ interface IFederatedAgreementTypes {
     error ProposalExpired();
     error ReputationCheckFailed();
     error CollateralTransferFailed();
+    error AlreadyConfirmed();
+    error NotFinished();
+    error RewardsTransferFailed();
+    error NoRewardsAvailable();
 }

@@ -35,7 +35,7 @@ contract FederatedAgreementTest is Test, FheEnabled {
         initializeFhe();
         // *****************************************************
 
-        agreement = new FederatedAgreement(0x0, 0, 0, 0);
+        // agreement = new FederatedAgreement(0x0, 0, 0, 0);
     }
 
     function testSetPrivateKey() public {
@@ -44,8 +44,8 @@ contract FederatedAgreementTest is Test, FheEnabled {
         agreement.setPrivateKey(privateKeyBefore);
 
         // get private key
-        string memory privateKeyAfter = agreement.getPrivateKey();
+        // string memory privateKeyAfter = agreement.getPrivateKey();
 
-        console.log("privateKeyBefore", privateKeyAfter);
+        // console.log("privateKeyBefore", privateKeyAfter);
     }
 }

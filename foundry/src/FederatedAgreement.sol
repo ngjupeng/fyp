@@ -10,9 +10,9 @@ import { IFederatedCore } from "./interfaces/IFederatedCore.sol";
 
 contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementTypes {
     // constant variables
-    uint256 constant PROPOSAL_VOTING_TIME = 2 hours;
-    uint256 constant BASIS_POINT = 10_000;
-    uint256 constant VOTES_THRESHOLD = 7000;
+    uint256 private constant PROPOSAL_VOTING_TIME = 2 hours;
+    uint256 private constant BASIS_POINT = 10_000;
+    uint256 private constant VOTES_THRESHOLD = 7000;
 
     // immutable variables
     uint256 public immutable TOTAL_REWARDS;
@@ -21,24 +21,32 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
     uint256 public immutable REPUTATION_THRESHOLD;
     address public immutable TOKEN_ADDRESS;
     address public immutable CORE_ADDRESS;
-
+    uint256 public immutable MAXIMUM_ROUNDS;
+    uint256 public immutable REWARD_EACH_ROUND;
     euint128 private encHighPrivateKey;
     euint128 private encLowPrivateKey;
     bytes private remainderPrivateKey;
 
     address public owner;
     address[] public participants;
-    mapping(address => bool) public isParticipant;
-    mapping(uint256 => Proposal[]) public proposals;
-    mapping(address => mapping(uint256 => bool)) public hasVoted;
-
     uint256 public round;
     uint256 public proposalId;
     FederatedAgreementStatus public status;
 
+    mapping(address => bool) public isParticipant;
+    mapping(uint256 => Proposal[]) public proposals;
+    mapping(address => mapping(uint256 => bool)) public hasVoted;
+    mapping(address => mapping(uint256 => bool)) public roundStateConfirmed;
+    mapping(uint256 => uint256) public roundStateConfirmedCount;
+    mapping(address => uint256) public rewards;
+    mapping(address => uint256) public collaterals;
+    mapping(address => uint256) public suspiciousCounts;
+    mapping(address => uint256) public lastClaimedRound;
+
     // ************************************
     // ************ MODIFIERs *************
     // ************************************
+
     modifier onlyOwner() {
         if (msg.sender != owner) {
             revert NotOwner();
@@ -60,6 +68,13 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
         _;
     }
 
+    modifier onlyFinished() {
+        if (status != FederatedAgreementStatus.FINISHED) {
+            revert NotFinished();
+        }
+        _;
+    }
+
     constructor(
         address _owner,
         address _tokenAddress,
@@ -67,7 +82,8 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
         uint256 _collateralAmount,
         uint256 _maximumParticipants,
         uint256 _reputationThreshold,
-        address _coreAddress
+        address _coreAddress,
+        uint256 _maximumRounds
     ) {
         owner = _owner;
         status = FederatedAgreementStatus.PENDING;
@@ -77,6 +93,12 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
         REPUTATION_THRESHOLD = _reputationThreshold;
         TOKEN_ADDRESS = _tokenAddress;
         CORE_ADDRESS = _coreAddress;
+        MAXIMUM_ROUNDS = _maximumRounds;
+        // update collateral and rewards
+        collaterals[msg.sender] = COLLATERAL_AMOUNT;
+
+        // dynamically calculate rewards for each round
+        REWARD_EACH_ROUND = TOTAL_REWARDS / MAXIMUM_ROUNDS;
     }
 
     // ************************************
@@ -102,7 +124,33 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
         encLowPrivateKey = FHE.asEuint128(uint128(lowPrivateKey));
     }
 
-    function proceedNextRound() public { }
+    function confirmRoundState() public {
+        // check if already confirmed
+        if (roundStateConfirmed[msg.sender][round]) {
+            revert AlreadyConfirmed();
+        }
+
+        roundStateConfirmed[msg.sender][round] = true;
+        roundStateConfirmedCount[round] += 1;
+
+        _proceedNextRound();
+    }
+
+    function finishAgreement() public onlyOwner {
+        // finish agreement earlier
+
+        // need to distribute all the remaining rewards to all participants if finish agreement earlier
+        // update round to latest round
+        round = MAXIMUM_ROUNDS;
+        status = FederatedAgreementStatus.FINISHED;
+
+        // increase reputation for all participants
+        for (uint256 i = 0; i < participants.length; i++) {
+            _increaseReputation(participants[i]);
+        }
+
+        emit AgreementFinished(round);
+    }
 
     function createProposal(address suspiciousParticipant, string memory description) public onlyRunning {
         proposalId += 1;
@@ -167,7 +215,6 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
         uint256 totalVotes = proposal.proposalVotesYes + proposal.proposalVotesNo;
         uint256 totalParticipants = participants.length;
 
-        // Condition 1: Check if the total number of votes meets the minimum threshold
         uint256 minimumVotesRequired = (totalParticipants * 2) / 3; // 2/3 of participants
         if (totalVotes < minimumVotesRequired) {
             proposal.proposalStatus = ProposalStatus.REJECTED;
@@ -178,8 +225,8 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
         uint256 yesVotePercentage = (proposal.proposalVotesYes * BASIS_POINT) / totalVotes;
         if (yesVotePercentage >= VOTES_THRESHOLD) {
             proposal.proposalStatus = ProposalStatus.ACCEPTED;
-            _penalizeSuspiciousParticipant(proposal.suspiciousParticipant);
-            _rewardProposer(proposal.proposer);
+            uint256 amount = _penalizeSuspiciousParticipant(proposal.suspiciousParticipant);
+            _rewardProposer(proposal.proposer, amount);
             emit ProposalFinalized(proposal.proposalId, proposal.proposalRound, true);
         } else {
             proposal.proposalStatus = ProposalStatus.REJECTED;
@@ -209,8 +256,36 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
 
         participants.push(participant);
         isParticipant[participant] = true;
+        collaterals[participant] = COLLATERAL_AMOUNT;
 
         emit ParticipantAdded(participant);
+    }
+
+    function redeemCollateral() public onlyFinished {
+        // transfer collateral back to participant
+        uint256 amount = collaterals[msg.sender];
+        delete collaterals[msg.sender];
+        bool isSuccess = IERC20(TOKEN_ADDRESS).transfer(msg.sender, amount);
+        if (!isSuccess) {
+            revert CollateralTransferFailed();
+        }
+
+        emit CollateralRedeemed(msg.sender, amount);
+    }
+
+    function redeemRewards() public {
+        uint256 amount = _calculateRewards(msg.sender);
+        if (amount <= 0) {
+            revert NoRewardsAvailable();
+        }
+        lastClaimedRound[msg.sender] = round;
+        delete rewards[msg.sender];
+        bool isSuccess = IERC20(TOKEN_ADDRESS).transfer(msg.sender, amount);
+        if (!isSuccess) {
+            revert RewardsTransferFailed();
+        }
+
+        emit RewardsRedeemed(msg.sender, round, amount);
     }
 
     function getPrivateKey(Permission memory auth)
@@ -234,16 +309,90 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
         return proposals[round];
     }
 
+    function getRewards(address participant) public view returns (uint256) {
+        return _calculateRewards(participant);
+    }
+
     // ************************************
     // ************ PRIVATEs **************
     // ************************************
-    function _penalizeSuspiciousParticipant(address participant) private {
-        // TODO: implement
+    function _penalizeSuspiciousParticipant(address participant) private returns (uint256) {
+        suspiciousCounts[participant] += 1;
+        // decrease reputation
+        IFederatedCore(CORE_ADDRESS).subtractReputation(participant);
+        // decrease collateral
+        // according to suspicious count, decrease more collateral if suspicious count is bigger
+        // first suspicious count, decrease 10% of collateral
+        // second suspicious count, decrease 20% of collateral
+        // third suspicious count, decrease 40% of collateral
+        // fourth suspicious count, decrease 80% of collateral
+        // fifth suspicious count, decrease 100% of collateral
+        // if collateral is less than 0, set it to 0
+
+        // get current collateral amount
+        uint256 collateralBefore = collaterals[participant];
+
+        if (suspiciousCounts[participant] >= 5) {
+            collaterals[participant] = 0;
+        } else if (suspiciousCounts[participant] >= 4) {
+            collaterals[participant] = (collaterals[participant] * 2000) / BASIS_POINT;
+        } else if (suspiciousCounts[participant] >= 3) {
+            collaterals[participant] = (collaterals[participant] * 6000) / BASIS_POINT;
+        } else if (suspiciousCounts[participant] >= 2) {
+            collaterals[participant] = (collaterals[participant] * 8000) / BASIS_POINT;
+        } else if (suspiciousCounts[participant] >= 1) {
+            collaterals[participant] = (collaterals[participant] * 9000) / BASIS_POINT;
+        }
+
+        uint256 collateralAfter = collaterals[participant];
+
+        // calculate the liquidated collateral amount
+        uint256 liquidatedCollateral = collateralBefore - collateralAfter;
+
+        return liquidatedCollateral;
     }
 
-    function _rewardProposer(address participant) private {
-        // TODO: implement
+    function _rewardProposer(address participant, uint256 amount) private {
+        // add extra rewards from liquidated collateral
+        rewards[participant] += amount;
     }
+
+    function _increaseReputation(address participant) private {
+        IFederatedCore(CORE_ADDRESS).addReputation(participant);
+    }
+
+    function _proceedNextRound() public {
+        // need at least 2/3 of participants to confirm the round state
+        uint256 minimumParticipantsRequired = (participants.length * 2) / 3;
+
+        if (roundStateConfirmedCount[round] >= minimumParticipantsRequired) {
+            round += 1;
+            // check if maximum rounds is reached
+            if (round > MAXIMUM_ROUNDS) {
+                status = FederatedAgreementStatus.FINISHED;
+                for (uint256 i = 0; i < participants.length; i++) {
+                    _increaseReputation(participants[i]);
+                }
+
+                emit AgreementFinished(round);
+                return;
+            }
+
+            emit ProceedNextRound(round);
+        }
+    }
+
+    function _calculateRewards(address participant) private view returns (uint256) {
+        uint256 lastClaimed = lastClaimedRound[participant];
+        if (lastClaimed >= round) {
+            return 0;
+        }
+        uint256 originalRewards = rewards[participant];
+        uint256 unclaimedRounds = ((round - lastClaimed) * REWARD_EACH_ROUND) + originalRewards;
+        return unclaimedRounds;
+    }
+
+    function _increaseAllParticipantsReputation() private { }
 
     function _reputationCheck(address participant) private view {
         // get reputation of participant from core contract
