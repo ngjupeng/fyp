@@ -1,0 +1,41 @@
+name: Node.js CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.18.1]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - name: Use Docker
+        uses: actions-hub/docker/cli@master
+        env:
+          SKIP_LOGIN: true
+      - name: Copy .env.example to .env.test
+        run: cp .env.example .env.test
+      - name : copy secrets to .env.test
+        run: echo "${{ secrets.ENV_TEST }}" >> .env.test
+      - run: npm install
+      - run: npm run build
+        name: Build
+      - run: npm run lint
+        name: Lint
+      - run: npm run test
+        name: Test
+      - run: NODE_ENV=test npm run test:e2e
+        name: E2E Test

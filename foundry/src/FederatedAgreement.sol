@@ -145,9 +145,7 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
         status = FederatedAgreementStatus.FINISHED;
 
         // increase reputation for all participants
-        for (uint256 i = 0; i < participants.length; i++) {
-            _increaseReputation(participants[i]);
-        }
+        _increaseAllParticipantsReputation();
 
         emit AgreementFinished(round);
     }
@@ -370,10 +368,7 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
             // check if maximum rounds is reached
             if (round > MAXIMUM_ROUNDS) {
                 status = FederatedAgreementStatus.FINISHED;
-                for (uint256 i = 0; i < participants.length; i++) {
-                    _increaseReputation(participants[i]);
-                }
-
+                _increaseAllParticipantsReputation();
                 emit AgreementFinished(round);
                 return;
             }
@@ -392,7 +387,12 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
         return unclaimedRounds;
     }
 
-    function _increaseAllParticipantsReputation() private { }
+    function _increaseAllParticipantsReputation() private {
+        for (uint256 i = 0; i < participants.length; i++) {
+            // NOTE: BAD APPROACH
+            _increaseReputation(participants[i]);
+        }
+    }
 
     function _reputationCheck(address participant) private view {
         // get reputation of participant from core contract
