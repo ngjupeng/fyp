@@ -37,7 +37,8 @@ import { MailType } from '../../common/enums/mail';
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
-  private readonly refreshTokenExpiresIn: string;
+  private readonly refreshTokenExpiresIn: number;
+  private readonly accessTokenExpiresIn: number;
   private readonly salt: string;
   private readonly frontendUrl: string;
 
@@ -49,8 +50,12 @@ export class AuthService {
     private readonly mailService: MailService,
     private readonly appConfigService: AppConfigService,
   ) {
-    this.refreshTokenExpiresIn =
-      this.appConfigService.authConfig.jwt.refreshTokenExpiresIn;
+    this.refreshTokenExpiresIn = parseInt(
+      this.appConfigService.authConfig.jwt.refreshTokenExpiresIn,
+    );
+    this.accessTokenExpiresIn = parseInt(
+      this.appConfigService.authConfig.jwt.accessTokenExpiresIn,
+    );
     this.frontendUrl = this.appConfigService.otherConfig.frontendUrl;
   }
 
@@ -68,10 +73,7 @@ export class AuthService {
       throw new UnauthorizedException(ErrorAuth.UserNotActive);
     }
 
-    const is2FAEnforced = this.appConfigService.otherConfig.require2FA;
-    const use2FA = is2FAEnforced || userEntity.isTwoFactorAuthEnabled;
-
-    return this.auth(userEntity, use2FA);
+    return this.auth(userEntity, userEntity.isTwoFactorAuthEnabled);
   }
 
   public async verifyTwoFaCode(
@@ -119,11 +121,16 @@ export class AuthService {
   ): Promise<AuthDto> {
     const authEntity = this.authRepository.findOne({ userId: userEntity.id });
 
-    const accessToken = await this.jwtService.signAsync({
-      email: userEntity.email,
-      userId: userEntity.id,
-      isTwoFaAuthenticated,
-    });
+    const accessToken = await this.jwtService.signAsync(
+      {
+        email: userEntity.email,
+        userId: userEntity.id,
+        isTwoFaAuthenticated,
+      },
+      {
+        expiresIn: this.accessTokenExpiresIn,
+      },
+    );
 
     const refreshToken = await this.jwtService.signAsync(
       {
@@ -174,11 +181,16 @@ export class AuthService {
       await this.jwtService.verifyAsync(refreshToken);
 
     // Generate a new access token
-    const newAccessToken = await this.jwtService.signAsync({
-      email,
-      userId,
-      isTwoFaAuthenticated,
-    });
+    const newAccessToken = await this.jwtService.signAsync(
+      {
+        email,
+        userId,
+        isTwoFaAuthenticated,
+      },
+      {
+        expiresIn: this.accessTokenExpiresIn,
+      },
+    );
 
     // Generate a new refresh token
     const newRefreshToken = await this.jwtService.signAsync(
@@ -413,7 +425,8 @@ export class AuthService {
       // check if token last_resend_at + resend interval is greater than current time
       const resendInterval = this.appConfigService.mailConfig.resendInterval;
       if (
-        Number(existingToken.createdAt.getTime()) + Number(resendInterval) >
+        Number(existingToken.createdAt.getTime()) +
+          Number(resendInterval) * 1000 >
         new Date().getTime()
       ) {
         throw new BadRequestException(ErrorAuth.ResendInterval);

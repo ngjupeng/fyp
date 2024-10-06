@@ -26,7 +26,6 @@ export class JwtAuthGuard extends AuthGuard('jwt-http') implements CanActivate {
       if (isPublic) {
         return true;
       }
-
       switch (e.message) {
         case ErrorAuth.TwoFactorAuthDisabled:
           throw new UnauthorizedException(ErrorAuth.TwoFactorAuthDisabled);

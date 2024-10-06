@@ -67,7 +67,7 @@ export class JwtHttpStrategy extends PassportStrategy(Strategy, 'jwt-http') {
     const is2FAEnforced = this.appConfigService.otherConfig.require2FA;
     const jwt = this.extractJwtToken(request);
 
-    await this.validateJwtToken(jwt, auth, request.url);
+    await this.validateJwtToken(jwt, auth);
 
     if (is2FAEnforced || auth.user.isTwoFactorAuthEnabled) {
       // first check if the endpoint is gen qr code and authenticate-2fa
@@ -99,13 +99,8 @@ export class JwtHttpStrategy extends PassportStrategy(Strategy, 'jwt-http') {
     }
   }
 
-  private async validateJwtToken(
-    jwt: string,
-    auth: any,
-    url: string,
-  ): Promise<void> {
-    const isRefreshRequest = url === '/auth/refresh';
-    const token = isRefreshRequest ? auth?.refreshToken : auth?.accessToken;
+  private async validateJwtToken(jwt: string, auth: any): Promise<void> {
+    const token = auth?.accessToken;
 
     if (!this.authService.compareToken(jwt, token)) {
       throw new UnauthorizedException(ErrorToken.Expired);
