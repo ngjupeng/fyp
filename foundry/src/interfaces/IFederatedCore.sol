@@ -31,4 +31,5 @@ interface IFederatedCore {
     // ************************************
     error TransferFailed();
     error NotAgreement();
+    error TokenNotSupported();
 }

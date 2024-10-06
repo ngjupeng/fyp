@@ -17,6 +17,9 @@ import {
   serverConfig,
 } from './common/config';
 import { ReferralModule } from './modules/referral/referral.module';
+import { ProjectModule } from './modules/project/project.module';
+import { SupportedTokenModule } from './modules/supported-token/supported-token.module';
+import { RoundModule } from './modules/round/round.module';
 
 @Module({
   imports: [
@@ -39,6 +42,9 @@ import { ReferralModule } from './modules/referral/referral.module';
     DatabaseModule,
     AuthModule,
     ReferralModule,
+    ProjectModule,
+    SupportedTokenModule,
+    RoundModule,
   ],
   controllers: [AppController],
   providers: [

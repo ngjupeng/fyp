@@ -4,8 +4,9 @@ pragma solidity ^0.8.19;
 import { FederatedAgreement } from "./FederatedAgreement.sol";
 import { IFederatedCore } from "./interfaces/IFederatedCore.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-contract FederatedCore is IFederatedCore {
+contract FederatedCore is IFederatedCore, Ownable {
     int256 private constant REPUTATION_INCREASE = 1;
     int256 private constant REPUTATION_DECREASE = 2;
 
@@ -14,6 +15,7 @@ contract FederatedCore is IFederatedCore {
     mapping(uint256 => address) private idToAgreement;
     mapping(address => uint256) private agreementToId;
     mapping(address => int256) private reputations;
+    mapping(address => bool) private supportedTokens;
 
     // ************************************
     // ************ MODIFIERs *************
@@ -24,6 +26,8 @@ contract FederatedCore is IFederatedCore {
         }
         _;
     }
+
+    constructor(address initialOwner) Ownable(initialOwner) { }
 
     // ************************************
     // ************ PUBLICs ***************
@@ -41,6 +45,10 @@ contract FederatedCore is IFederatedCore {
         public
         returns (address)
     {
+        if (!supportedTokens[_tokenAddress]) {
+            revert TokenNotSupported();
+        }
+
         FederatedAgreement agreement = new FederatedAgreement(
             _owner,
             _tokenAddress,
@@ -82,6 +90,14 @@ contract FederatedCore is IFederatedCore {
 
     function subtractReputation(address user) public onlyAgreement(msg.sender) {
         reputations[user] -= REPUTATION_DECREASE;
+    }
+
+    function addSupportedToken(address tokenAddress) public onlyOwner {
+        supportedTokens[tokenAddress] = true;
+    }
+
+    function removeSupportedToken(address tokenAddress) public onlyOwner {
+        supportedTokens[tokenAddress] = false;
     }
 
     function getReputation(address user) public view returns (int256) {

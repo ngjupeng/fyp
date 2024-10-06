@@ -9,6 +9,10 @@ import { TokenEntity } from '../modules/auth/token.entity';
 import { APP } from '../common/constants';
 import { AppConfigService } from '../common/config/services/config.service';
 import { ReferralCodeEntity } from '../modules/referral/referral.entity';
+import { ProjectEntity } from 'src/modules/project/project.entity';
+import { RoundEntity } from 'src/modules/round/round.entity';
+import { ParticipantSubmissionEntity } from 'src/modules/round/participant-submission.entity';
+import { SupportedTokenEntity } from 'src/modules/supported-token/supported-token.entity';
 
 @Module({
   imports: [
@@ -24,7 +28,16 @@ import { ReferralCodeEntity } from '../modules/referral/referral.entity';
         return {
           name: 'default',
           type: 'postgres',
-          entities: [UserEntity, AuthEntity, TokenEntity, ReferralCodeEntity],
+          entities: [
+            UserEntity,
+            AuthEntity,
+            TokenEntity,
+            ReferralCodeEntity,
+            ProjectEntity,
+            SupportedTokenEntity,
+            RoundEntity,
+            ParticipantSubmissionEntity,
+          ],
           // We are using migrations, synchronize should be set to false.
           synchronize: false,
           // Run migrations automatically,
