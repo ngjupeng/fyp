@@ -20,7 +20,7 @@ interface IFederatedAgreementTypes {
         address suspiciousParticipant;
         uint256 proposalId;
         uint256 proposalRound;
-        uint256 proposalExpirationTime;
+        uint256 proposalVotingTime;
         uint256 proposalVotesYes;
         uint256 proposalVotesNo;
         ProposalStatus proposalStatus;
@@ -55,6 +55,8 @@ interface IFederatedAgreementTypes {
 
     event CollateralRedeemed(address indexed participant, uint256 amount);
 
+    event RoundIPFSStateSubmitted(address indexed participant, uint256 indexed round, string indexed ipfsHash);
+
     // ************************************
     // ************ ERRORs ****************
     // ************************************
@@ -67,11 +69,16 @@ interface IFederatedAgreementTypes {
     error NotParticipant();
     error AlreadyVoted();
     error ProposalNotVoting();
-    error ProposalExpired();
+    error ProposalStillVoting();
     error ReputationCheckFailed();
     error CollateralTransferFailed();
     error AlreadyConfirmed();
     error NotFinished();
     error RewardsTransferFailed();
     error NoRewardsAvailable();
+    error AlreadySubmitted();
+    error IPFSStateNotSubmitted();
+    error ProposalVotingTimeExceeded();
+    error MinimumVotesRequiredNotReached();
+    error ProposalRoundNotMatch();
 }

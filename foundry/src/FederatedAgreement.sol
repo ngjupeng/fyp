@@ -42,6 +42,8 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
     mapping(address => uint256) public collaterals;
     mapping(address => uint256) public suspiciousCounts;
     mapping(address => uint256) public lastClaimedRound;
+    // participant -> round -> IPFS hash
+    mapping(address => mapping(uint256 => string)) public roundIPFSHashes;
 
     // ************************************
     // ************ MODIFIERs *************
@@ -125,6 +127,13 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
     }
 
     function confirmRoundState() public {
+        _requiredParticipant(msg.sender);
+
+        // check if IPFS hash is submitted
+        if (bytes(roundIPFSHashes[msg.sender][round]).length == 0) {
+            revert IPFSStateNotSubmitted();
+        }
+
         // check if already confirmed
         if (roundStateConfirmed[msg.sender][round]) {
             revert AlreadyConfirmed();
@@ -158,7 +167,7 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
                 suspiciousParticipant: suspiciousParticipant,
                 proposalId: proposalId,
                 proposalRound: round,
-                proposalExpirationTime: block.timestamp + PROPOSAL_VOTING_TIME,
+                proposalVotingTime: block.timestamp + PROPOSAL_VOTING_TIME,
                 proposalVotesYes: 0,
                 proposalVotesNo: 0,
                 proposalStatus: ProposalStatus.VOTING,
@@ -169,6 +178,19 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
         emit ProposalCreated(
             msg.sender, suspiciousParticipant, round, proposalId, block.timestamp + PROPOSAL_VOTING_TIME, description
         );
+    }
+
+    function submitRoundIPFSState(string memory ipfsHash) public onlyRunning {
+        _requiredParticipant(msg.sender);
+
+        // check if already submitted
+        if (bytes(roundIPFSHashes[msg.sender][round]).length > 0) {
+            revert AlreadySubmitted();
+        }
+
+        roundIPFSHashes[msg.sender][round] = ipfsHash;
+
+        emit RoundIPFSStateSubmitted(msg.sender, round, ipfsHash);
     }
 
     function voteProposal(uint256 index, bool isVoteYes) public onlyRunning {
@@ -183,8 +205,8 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
             revert ProposalNotVoting();
         }
 
-        if (proposal.proposalExpirationTime < block.timestamp) {
-            revert ProposalExpired();
+        if (block.timestamp > proposal.proposalVotingTime) {
+            revert ProposalVotingTimeExceeded();
         }
 
         if (isVoteYes) {
@@ -206,18 +228,17 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
             revert ProposalNotVoting();
         }
 
-        if (proposal.proposalExpirationTime < block.timestamp) {
-            revert ProposalExpired();
-        }
-
         uint256 totalVotes = proposal.proposalVotesYes + proposal.proposalVotesNo;
         uint256 totalParticipants = participants.length;
 
         uint256 minimumVotesRequired = (totalParticipants * 2) / 3; // 2/3 of participants
         if (totalVotes < minimumVotesRequired) {
-            proposal.proposalStatus = ProposalStatus.REJECTED;
-            emit ProposalFinalized(proposal.proposalId, proposal.proposalRound, false);
-            return;
+            revert MinimumVotesRequiredNotReached();
+        }
+
+        // if reach minimum votes, but current round != proposa.round, revert
+        if (proposal.proposalRound != round) {
+            revert ProposalRoundNotMatch();
         }
 
         uint256 yesVotePercentage = (proposal.proposalVotesYes * BASIS_POINT) / totalVotes;

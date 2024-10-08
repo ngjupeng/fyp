@@ -4,6 +4,7 @@ import {
   JoinColumn,
   JoinTable,
   ManyToMany,
+  ManyToOne,
   OneToMany,
   OneToOne,
 } from 'typeorm';
@@ -12,6 +13,7 @@ import { BaseEntity } from '../../database/base.entity';
 import { UserEntity } from '../user/user.entity';
 import { RoundEntity } from '../round/round.entity';
 import { ParticipantSubmissionEntity } from '../round/participant-submission.entity';
+import { ProjectStatusType } from 'src/common/enums/project';
 
 @Entity({ name: 'projects' })
 export class ProjectEntity extends BaseEntity {
@@ -45,7 +47,7 @@ export class ProjectEntity extends BaseEntity {
   @Column({ type: 'int' })
   public maximumRounds: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', default: 0 })
   public currentRound: number;
 
   @Column({ type: 'varchar', unique: true })
@@ -57,8 +59,14 @@ export class ProjectEntity extends BaseEntity {
   @Column({ type: 'jsonb' })
   public fileStructure: object;
 
+  @Column({
+    type: 'enum',
+    enum: ProjectStatusType,
+  })
+  public status: ProjectStatusType;
+
+  @ManyToOne(() => UserEntity)
   @JoinColumn()
-  @OneToOne(() => UserEntity)
   public creator: UserEntity;
 
   @ManyToMany(() => UserEntity)

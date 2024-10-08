@@ -22,7 +22,7 @@ export class SupportedTokenController {
   @Post('/create')
   public async createSupportedToken(
     @Body() body: CreateSupportTokenDto,
-  ): Promise<any> {
+  ): Promise<void> {
     return this.supportedTokenService.createToken(body);
   }
 
