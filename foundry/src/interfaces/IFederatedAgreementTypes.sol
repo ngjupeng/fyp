@@ -57,6 +57,8 @@ interface IFederatedAgreementTypes {
 
     event RoundIPFSStateSubmitted(address indexed participant, uint256 indexed round, string indexed ipfsHash);
 
+    event AgreementStarted();
+
     // ************************************
     // ************ ERRORs ****************
     // ************************************
@@ -81,4 +83,5 @@ interface IFederatedAgreementTypes {
     error ProposalVotingTimeExceeded();
     error MinimumVotesRequiredNotReached();
     error ProposalRoundNotMatch();
+    error InvalidAgreementStatus();
 }

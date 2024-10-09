@@ -5,9 +5,12 @@ import {
   Request,
   UseGuards,
   Patch,
+  Put,
+  Body,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiOperation,
   ApiQuery,
   ApiResponse,
@@ -20,6 +23,7 @@ import { RoleGuard } from '../../common/guards/role.user';
 import { Role } from '../../common/enums/role';
 import { Roles } from '../../common/decorators/roles';
 import { UserWithoutSecretDto } from './user.response.dto';
+import { BindAddressDto } from './user.dto';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RoleGuard)
@@ -125,5 +129,27 @@ export class UserController {
     @Query('role') role: Role,
   ): Promise<void> {
     return this.userService.updateRole(req.user, id, role, isRemove);
+  }
+
+  // bind address to user
+  @Patch('/bind-address')
+  @ApiOperation({
+    summary: 'Bind Address to User',
+    description: 'Bind an address to the authenticated user',
+  })
+  @ApiBody({ type: BindAddressDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Address bound to user',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Address already bound to another user',
+  })
+  public async bindAddress(
+    @Request() req: RequestWithUser,
+    @Body() body: BindAddressDto,
+  ): Promise<void> {
+    return this.userService.bindAddress(req.user, body.address);
   }
 }

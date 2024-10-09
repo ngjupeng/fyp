@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   Param,
   Post,
   Put,
@@ -15,11 +16,7 @@ import {
 } from '@nestjs/swagger';
 import { ProjectService } from './project.service';
 import { RequestWithUser } from 'src/common/interfaces';
-import {
-  CreateProjectBase,
-  CreateProjectDto,
-  UpdateProjectDto,
-} from './project.dto';
+import { ProjectBase, ProjectDto } from './project.dto';
 import { JwtAuthGuard } from 'src/common/guards';
 
 @ApiBearerAuth()
@@ -36,25 +33,46 @@ export class ProjectController {
   @Post('/create')
   public async createProject(
     @Request() req: RequestWithUser,
-    @Body() body: CreateProjectBase,
-  ): Promise<any> {
+    @Body() body: ProjectBase,
+  ): Promise<void> {
     return this.projectService.createProject(req.user, body);
   }
 
-  // update project configuration
-  @ApiOperation({ summary: 'Update project configuration' })
-  @ApiResponse({
-    status: 200,
-    description: 'Project configuration updated successfully',
-  })
+  // get all projects
+  @ApiOperation({ summary: 'Get all projects' })
+  @ApiResponse({ status: 200, description: 'Projects fetched successfully' })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  @Get('/all')
+  public async getAllProjects(@Request() req: RequestWithUser): Promise<any> {
+    return this.projectService.getAllProjects();
+  }
+
+  // join project
+  @ApiOperation({ summary: 'Join a project' })
+  @ApiResponse({ status: 200, description: 'Project joined successfully' })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   @UseGuards(JwtAuthGuard)
-  @Put('/update/:id')
-  public async updateProject(
-    @Param('id') id: string,
-    @Body() body: UpdateProjectDto,
+  @Post('/join/:id')
+  public async joinProject(
+    @Request() req: RequestWithUser,
+    @Param('id') projectId: number,
+  ): Promise<void> {
+    return this.projectService.joinProject(req.user, projectId);
+  }
+
+  // start project
+  @ApiOperation({ summary: 'Start a project' })
+  @ApiResponse({ status: 200, description: 'Project started successfully' })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  @UseGuards(JwtAuthGuard)
+  @Post('/start/:id')
+  public async startProject(
+    @Request() req: RequestWithUser,
+    @Param('id') projectId: number,
   ): Promise<any> {
-    return this.projectService.updateProject(id, body);
+    return this.projectService.startProject(req.user, projectId);
   }
 }

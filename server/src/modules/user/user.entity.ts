@@ -28,6 +28,9 @@ export class UserEntity extends BaseEntity implements IUser {
   @Column({ type: 'enum', enum: Role, nullable: true })
   public role: Role | null;
 
+  @Column({ type: 'varchar', unique: true })
+  public address: string;
+
   @Column({
     type: 'enum',
     enum: UserStatus,

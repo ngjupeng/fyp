@@ -17,6 +17,7 @@ export enum ErrorUser {
   NoRole = 'User has no role',
   AdminRoleCannotBeChanged = 'Admin role cannot be changed',
   RoleCannotBeChanged = 'Role cannot be changed',
+  AddressAlreadyBound = 'Address already bound to another user',
 }
 
 export enum ErrorAuth {

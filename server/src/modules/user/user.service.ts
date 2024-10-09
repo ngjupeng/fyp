@@ -353,4 +353,17 @@ export class UserService {
           : null,
     }));
   }
+
+  public async bindAddress(
+    userEntity: UserEntity,
+    address: string,
+  ): Promise<void> {
+    // first check if the address is already bound to another user
+    const userWithAddress = await this.userRepository.findOne({ address });
+    if (userWithAddress) {
+      throw new BadRequestException(ErrorUser.AddressAlreadyBound);
+    }
+    userEntity.address = address;
+    await userEntity.save();
+  }
 }

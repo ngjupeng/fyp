@@ -11,6 +11,8 @@ import * as cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { APP } from './common/constants';
 import { AppConfigService } from './common/config/services/config.service';
+import { ProjectService } from './modules/project/project.service';
+import { RoundService } from './modules/round/round.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -112,6 +114,15 @@ async function bootstrap() {
 
   await app.listen(port, host, async () => {
     console.info(`API server is running on http://${host}:${port}`);
+
+    // Get the ProjectService instance
+    const projectService = app.get(ProjectService);
+
+    // Call the watchProjectFinishEvent method
+    await projectService.watchProjectFinishEvent();
+
+    const roundService = app.get(RoundService);
+    await roundService.proceedToNextRound();
   });
 }
 bootstrap();

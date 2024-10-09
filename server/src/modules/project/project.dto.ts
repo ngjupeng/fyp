@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  IsArray,
   IsEnum,
   IsNotEmpty,
   IsNumber,
@@ -10,7 +11,7 @@ import {
 import { ProjectStatusType } from 'src/common/enums/project';
 import { UserEntity } from '../user/user.entity';
 
-export class CreateProjectBase {
+export class ProjectBase {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
@@ -82,7 +83,7 @@ export class CreateProjectBase {
   public fileStructure: object;
 }
 
-export class CreateProjectDto extends CreateProjectBase {
+export class ProjectDto extends ProjectBase {
   @ApiProperty()
   @IsEnum(ProjectStatusType)
   @IsNotEmpty()
@@ -96,6 +97,8 @@ export class CreateProjectDto extends CreateProjectBase {
   @IsNumber()
   @IsNotEmpty()
   public currentRound: number;
-}
 
-export class UpdateProjectDto implements Partial<CreateProjectBase> {}
+  @ApiProperty({ type: [UserEntity] })
+  @IsArray()
+  public participants: UserEntity[];
+}

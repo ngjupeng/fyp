@@ -98,9 +98,25 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
         MAXIMUM_ROUNDS = _maximumRounds;
         // update collateral and rewards
         collaterals[msg.sender] = COLLATERAL_AMOUNT;
+        isParticipant[msg.sender] = true;
+        participants.push(msg.sender);
 
         // dynamically calculate rewards for each round
         REWARD_EACH_ROUND = TOTAL_REWARDS / MAXIMUM_ROUNDS;
+    }
+
+    // ************************************
+    // ************ SANDBOXs **************
+    // ************************************
+    function finishAgreementSandbox() public onlyOwner {
+        round = MAXIMUM_ROUNDS;
+        status = FederatedAgreementStatus.FINISHED;
+        IFederatedCore(CORE_ADDRESS).emitAgreementFinished(address(this), round);
+    }
+
+    function proceedNextRoundSandbox() public {
+        round += 1;
+        IFederatedCore(CORE_ADDRESS).emitAgreementProceedNextRound(address(this), round);
     }
 
     // ************************************
@@ -126,7 +142,18 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
         encLowPrivateKey = FHE.asEuint128(uint128(lowPrivateKey));
     }
 
-    function confirmRoundState() public {
+    function startAgreement() public onlyOwner {
+        // if ady running, throw error
+        if (status == FederatedAgreementStatus.RUNNING || status == FederatedAgreementStatus.FINISHED) {
+            revert InvalidAgreementStatus();
+        }
+
+        status = FederatedAgreementStatus.RUNNING;
+
+        emit AgreementStarted();
+    }
+
+    function confirmRoundState() public onlyRunning {
         _requiredParticipant(msg.sender);
 
         // check if IPFS hash is submitted
@@ -156,7 +183,7 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
         // increase reputation for all participants
         _increaseAllParticipantsReputation();
 
-        emit AgreementFinished(round);
+        IFederatedCore(CORE_ADDRESS).emitAgreementFinished(address(this), round);
     }
 
     function createProposal(address suspiciousParticipant, string memory description) public onlyRunning {
@@ -390,11 +417,10 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
             if (round > MAXIMUM_ROUNDS) {
                 status = FederatedAgreementStatus.FINISHED;
                 _increaseAllParticipantsReputation();
-                emit AgreementFinished(round);
+                IFederatedCore(CORE_ADDRESS).emitAgreementFinished(address(this), round);
                 return;
             }
-
-            emit ProceedNextRound(round);
+            IFederatedCore(CORE_ADDRESS).emitAgreementProceedNextRound(address(this), round);
         }
     }
 

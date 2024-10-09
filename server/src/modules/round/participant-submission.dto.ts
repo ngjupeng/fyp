@@ -12,11 +12,6 @@ export class CreateParticipantSubmissionDto {
   @IsNumber()
   roundId: number;
 
-  @ApiProperty({ description: 'The ID of the participant' })
-  @IsNotEmpty()
-  @IsNumber()
-  participantId: number;
-
   @ApiProperty({ description: 'The IPFS link for the submission' })
   @IsNotEmpty()
   @IsString()
@@ -28,4 +23,11 @@ export class CreateParticipantSubmissionDto {
   @IsNotEmpty()
   @IsArray()
   flattenedParameters: string[];
+}
+
+export class ParticipantSubmissionResponseDto extends CreateParticipantSubmissionDto {
+  @ApiProperty({ description: 'The ID of the participant' })
+  @IsNotEmpty()
+  @IsNumber()
+  participantId: number;
 }

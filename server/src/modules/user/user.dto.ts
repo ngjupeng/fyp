@@ -34,3 +34,10 @@ export class UserDto extends UserSignUpDto {
   public referralCode?: ReferralCodeEntity | null;
   public referredBy?: UserEntity | null;
 }
+
+export class BindAddressDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  public address: string;
+}

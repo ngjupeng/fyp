@@ -84,6 +84,14 @@ contract FederatedCore is IFederatedCore, Ownable {
         return address(agreement);
     }
 
+    function emitAgreementFinished(address agreement, uint256 round) public onlyAgreement(agreement) {
+        emit AgreementFinished(agreement, round);
+    }
+
+    function emitAgreementProceedNextRound(address agreement, uint256 round) public onlyAgreement(agreement) {
+        emit AgreementProceedNextRound(agreement, round);
+    }
+
     function addReputation(address user) public onlyAgreement(msg.sender) {
         reputations[user] += REPUTATION_INCREASE;
     }

@@ -9,6 +9,10 @@ interface IFederatedCore {
 
     function subtractReputation(address user) external;
 
+    function emitAgreementFinished(address agreement, uint256 round) external;
+
+    function emitAgreementProceedNextRound(address agreement, uint256 round) external;
+
     // ************************************
     // ************ EVENTS ****************
     // ************************************
@@ -25,6 +29,10 @@ interface IFederatedCore {
         uint256 maximumParticipants,
         uint256 reputationThreshold
     );
+
+    event AgreementFinished(address indexed agreement, uint256 indexed round);
+
+    event AgreementProceedNextRound(address indexed agreement, uint256 indexed round);
 
     // ************************************
     // ************ ERRORs ****************
