@@ -62,6 +62,11 @@ def homomorphic_addition(encrypted_arrays, n):
 
     encrypted_arrays = encrypted_arrays.split("&")
 
+    # get the length of encrypted_arrays
+    length = len(
+        encrypted_arrays
+    )  # this is number of submission/participants, at the end we need to divide the result by this number
+
     encrypted_array = encrypted_arrays[0].split("|")
     fraction1 = [string_to_fraction(frac_str) for frac_str in encrypted_array]
     encrypted_tensor_result = EncryptedTensor(fraction1, cs)
@@ -71,6 +76,8 @@ def homomorphic_addition(encrypted_arrays, n):
         fraction2 = [string_to_fraction(frac_str) for frac_str in encrypted_array2]
         encrypted_tensor2 = EncryptedTensor(fraction2, cs)
         encrypted_tensor_result = encrypted_tensor_result + encrypted_tensor2
+
+    encrypted_tensor_result = encrypted_tensor_result * (1 / length)
 
     fraction_strings = [
         fraction_to_string(frac) for frac in encrypted_tensor_result.fractions
