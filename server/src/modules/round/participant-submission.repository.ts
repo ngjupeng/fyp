@@ -1,6 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindManyOptions, FindOptionsWhere, Repository } from 'typeorm';
+import {
+  FindManyOptions,
+  FindOneOptions,
+  FindOptionsWhere,
+  Repository,
+} from 'typeorm';
 import { ParticipantSubmissionEntity } from './participant-submission.entity';
 import {
   CreateParticipantSubmissionDto,
@@ -18,11 +23,12 @@ export class ParticipantSubmissionRepository {
 
   public async findOne(
     where: FindOptionsWhere<ParticipantSubmissionEntity>,
+    options?: FindOneOptions<ParticipantSubmissionEntity>,
   ): Promise<ParticipantSubmissionEntity | null> {
     const participantSubmissionEntity =
       await this.participantSubmissionEntityRepository.findOne({
         where,
-        relations: ['project'],
+        ...options,
       });
 
     return participantSubmissionEntity;

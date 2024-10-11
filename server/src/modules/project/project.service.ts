@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 
-import { ProjectBase } from './project.dto';
+import { ProjectBase, ProjectResponseDto } from './project.dto';
 import { UserEntity } from '../user/user.entity';
 import { ProjectRepository } from './project.repository';
 import { ProjectStatusType } from 'src/common/enums/project';
@@ -11,6 +11,7 @@ import { ProjectEntity } from './project.entity';
 import { abis } from 'src/common/constants/abis';
 import { publicClient } from 'src/common/viem/public-client';
 import { RoundService } from '../round/round.service';
+import { RoundEntity } from '../round/round.entity';
 
 @Injectable()
 export class ProjectService {
@@ -61,13 +62,28 @@ export class ProjectService {
     });
   }
 
-  public async getAllProjects(): Promise<ProjectEntity[]> {
-    return this.projectRepository.find({});
+  public async getAllProjects(): Promise<ProjectResponseDto[]> {
+    const projects = await this.projectRepository.find(
+      {},
+      { relations: ['participants'] },
+    );
+
+    return projects.map(
+      (project) =>
+        ({
+          ...project,
+          participants: [],
+          participantsCount: project.participants.length,
+        }) as ProjectResponseDto,
+    );
   }
 
   public async joinProject(user: UserEntity, projectId: number): Promise<void> {
     // get project
-    const project = await this.projectRepository.findOne({ id: projectId });
+    const project = await this.projectRepository.findOne(
+      { id: projectId },
+      { relations: ['participants'] },
+    );
 
     if (!project) {
       throw new BadRequestException('Project not found');
@@ -107,7 +123,10 @@ export class ProjectService {
     projectId: number,
   ): Promise<void> {
     // get project
-    const project = await this.projectRepository.findOne({ id: projectId });
+    const project = await this.projectRepository.findOne(
+      { id: projectId },
+      { relations: ['creator'] },
+    );
 
     if (!project) {
       throw new BadRequestException('Project not found');
@@ -130,7 +149,7 @@ export class ProjectService {
     );
 
     // create first round
-    this.roundService.createFirstRound(projectId);
+    await this.roundService.createFirstRound(projectId);
   }
 
   public async endProject(
@@ -172,5 +191,27 @@ export class ProjectService {
         console.log(logs);
       },
     });
+  }
+
+  public async getProjectCurrentRound(projectId: number): Promise<RoundEntity> {
+    const project = await this.projectRepository.findOne(
+      { id: projectId },
+      { relations: ['rounds'] },
+    );
+    // acess rounds array by index of currentRound - 1
+    // first check if round is 0
+    if (project.currentRound === 0) {
+      return null;
+    }
+
+    return project.rounds[project.currentRound - 1];
+  }
+
+  public async getProjectDetails(projectId: number): Promise<ProjectEntity> {
+    const project = await this.projectRepository.findOne(
+      { id: projectId },
+      { relations: ['rounds'] },
+    );
+    return project;
   }
 }

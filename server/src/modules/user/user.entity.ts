@@ -19,18 +19,22 @@ export class UserEntity extends BaseEntity implements IUser {
   @Column({ type: 'varchar', unique: true })
   public email: string;
 
+  @Exclude()
   @Column({ type: 'varchar', nullable: true })
   public twoFactorAuthSecret: string | null;
 
+  @Exclude()
   @Column({ type: 'boolean', default: false })
   public isTwoFactorAuthEnabled: boolean;
 
+  @Exclude()
   @Column({ type: 'enum', enum: Role, nullable: true })
   public role: Role | null;
 
   @Column({ type: 'varchar', unique: true })
   public address: string;
 
+  @Exclude()
   @Column({
     type: 'enum',
     enum: UserStatus,

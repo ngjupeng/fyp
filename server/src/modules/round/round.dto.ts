@@ -1,7 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsNotEmpty,
+  IsNumber,
+  IsObject,
+  IsString,
+} from 'class-validator';
 import { ParticipantSubmissionEntity } from './participant-submission.entity';
 import { RoundEntity } from './round.entity';
+import { ProjectEntity } from '../project/project.entity';
 
 export class RoundDto {
   @ApiProperty({ description: 'The project round number' })
@@ -16,8 +23,8 @@ export class RoundDto {
 
   @ApiProperty({ description: 'The project ID' })
   @IsNotEmpty()
-  @IsNumber()
-  projectId: number;
+  @IsObject()
+  project: ProjectEntity;
 }
 
 export interface CreateRoundDto

@@ -8,6 +8,7 @@ import { ProjectEntity } from '../project/project.entity';
 import { ProjectRepository } from '../project/project.repository';
 import { ParticipantSubmissionRepository } from './participant-submission.repository';
 import { ParticipantSubmissionEntity } from './participant-submission.entity';
+import { AppConfigService } from 'src/common/config/services/config.service';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ParticipantSubmissionEntity } from './participant-submission.entity';
     RoundRepository,
     ProjectRepository,
     ParticipantSubmissionRepository,
+    AppConfigService,
   ],
   controllers: [RoundController],
   exports: [RoundService, RoundRepository],

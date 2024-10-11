@@ -22,4 +22,5 @@ export class UserWithoutSecretDto {
   public referralCode?: ReferralCodeEntity | null | number;
   public referredBy?: UserMinimalDto | number;
   public isTwoFactorAuthEnabled: boolean;
+  public address?: string;
 }

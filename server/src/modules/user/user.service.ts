@@ -191,6 +191,7 @@ export class UserService {
       role: userEntity.role,
       status: userEntity.status,
       isTwoFactorAuthEnabled: userEntity.isTwoFactorAuthEnabled,
+      address: userEntity.address,
       referralCode: isExtend
         ? userEntity.referralCode
         : userEntity.referralCode

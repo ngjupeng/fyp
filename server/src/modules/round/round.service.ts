@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-
 import { RoundRepository } from './round.repository';
-import { CreateRoundDto, RoundDetailResponseDto, RoundDto } from './round.dto';
+import { RoundDetailResponseDto, RoundDto } from './round.dto';
 import { ProjectRepository } from '../project/project.repository';
 import { CreateParticipantSubmissionDto } from './participant-submission.dto';
 import { UserEntity } from '../user/user.entity';
@@ -11,8 +10,10 @@ import { abis } from 'src/common/constants/abis';
 import { ProjectStatusType } from 'src/common/enums/project';
 import { PythonShell } from 'python-shell';
 import * as path from 'path';
-import { fileURLToPath } from 'url';
-import { Double } from 'typeorm';
+import { PinataSDK } from 'pinata-web3';
+import { AppConfigService } from 'src/common/config/services/config.service';
+import { classToPlain } from 'class-transformer';
+
 @Injectable()
 export class RoundService {
   private readonly logger = new Logger(RoundService.name);
@@ -20,6 +21,7 @@ export class RoundService {
     private readonly roundRepository: RoundRepository,
     private readonly projectRepository: ProjectRepository,
     private readonly participantSubmissionRepository: ParticipantSubmissionRepository,
+    private readonly appConfigService: AppConfigService,
   ) {}
 
   public async createFirstRound(projectId: number): Promise<void> {
@@ -29,15 +31,21 @@ export class RoundService {
     });
 
     if (!project) {
-      throw new Error('Project not found');
+      throw new BadRequestException('Project not found');
     }
 
     // get the project current round
     const currentRound = project.currentRound;
 
+    // also update project current round
+    await this.projectRepository.updateOne(
+      { id: projectId },
+      { currentRound: currentRound + 1 },
+    );
+
     // create new round
     await this.roundRepository.create({
-      projectId: projectId,
+      project: project,
       roundNumber: currentRound + 1,
       globalModelIPFSLink: project.initialGlobalModel,
     });
@@ -45,7 +53,106 @@ export class RoundService {
 
   // create new round for a project
   // need to watch for the event for creating new round when people calling confirm round state on contract
-  public async proceedToNextRound(): Promise<any> {
+  public async watchNextRoundEvent(): Promise<any> {
+    publicClient.watchContractEvent({
+      address: abis.federatedCore.address as `0x${string}`,
+      abi: abis.federatedCore.abi.abi,
+      eventName: 'AgreementProceedNextRound',
+      onLogs: (logs) => {
+        const event = logs[0] as any;
+        const agreementAddress = event?.args?.agreement;
+        this.proceedToNextRound(agreementAddress);
+      },
+    });
+  }
+
+  private async proceedToNextRound(agreementAddress: string): Promise<any> {
+    // get the project
+    let project = await this.projectRepository.findOne({
+      agreementAddress: agreementAddress,
+    });
+
+    if (!project) {
+      throw new BadRequestException('Project not found');
+    }
+
+    try {
+      // get g and n from project record
+      const g = project.g;
+      const n = project.n;
+
+      // get all round submission for the project
+      const submissions = await this.participantSubmissionRepository.find({
+        round: {
+          project: project,
+          roundNumber: project.currentRound,
+        },
+      });
+
+      if (submissions.length <= 1) {
+        throw new BadRequestException('Not enough submissions');
+      }
+
+      // extract all encrypted parameters
+      const encryptedParameters = submissions.map((submission) => {
+        return submission.encryptedParameters;
+      });
+      console.log(encryptedParameters);
+
+      const result = await this.homomorphicAddition(
+        encryptedParameters.join('&'),
+        n,
+      );
+
+      // prepare IPFS format
+      const data = {
+        model_name: project.name,
+        parameters: result,
+      };
+
+      // upload to IPFS
+      const pinata = new PinataSDK({
+        pinataJwt: this.appConfigService.otherConfig.pinataJwt,
+        pinataGateway: 'example-gateway.mypinata.cloud',
+      });
+
+      const jsonString = JSON.stringify(data);
+
+      // Create a Blob with the JSON data
+      const blob = new Blob([jsonString], { type: 'application/json' });
+
+      // get project current round
+      const currentRound = project.currentRound + 1;
+
+      // Create a File object from the Blob
+      const file = new File(
+        [blob],
+        `${project.name}_${currentRound}_model.json`,
+        {
+          type: 'application/json',
+        },
+      );
+
+      // Upload to IPFS
+      const upload = await pinata.upload.file(file);
+      console.log('IPFS upload result:', upload);
+
+      // Get IPFS hash
+      const ipfsHash = upload.IpfsHash;
+
+      // Create new round with IPFS hash
+      await this.roundRepository.create({
+        project: project,
+        roundNumber: currentRound,
+        globalModelIPFSLink: ipfsHash,
+      });
+    } catch (BadRequestException) {
+      console.log(BadRequestException);
+      throw new BadRequestException(BadRequestException);
+    }
+  }
+
+  public async proceedToNextRoundSandbox(): Promise<any> {
     // publicClient.watchContractEvent({
     //   address: abis.federatedCore.address as `0x${string}`,
     //   abi: abis.federatedCore.abi.abi,
@@ -79,7 +186,8 @@ export class RoundService {
         maximumParticipantAllowed: 5,
         maximumRounds: 5,
         minimumReputation: 1,
-        publicKey: '0x0',
+        g: '0x0',
+        n: '0x0',
         tokenAddress: '0x0',
         totalRewardAmount: 5,
         verificationDatasetURL: 'test',
@@ -131,58 +239,9 @@ export class RoundService {
       );
 
       console.log(decryptedArrayNumber);
-    } catch (error) {
-      console.log(error);
+    } catch (BadRequestException) {
+      console.log(BadRequestException);
     }
-    // console.log(encryptedArray);
-    //
-
-    // const encryptedArray = await this.encryptArray(
-    //   flattenedParametersBeforeEncrypt,
-    // );
-    // have python library here to do the homomorphic encryption
-
-    // const submissions = await this.participantSubmissionRepository.create({
-    //   participantId: 1,
-    //   roundId: 1,
-    //   projectId: 1,
-    //   ipfsLink: 'test',
-    //   flattenedParameters: ['test'],
-    // });
-
-    // do homomorphic aggregation
-    // search for all round submissions
-    // const submissions = await this.participantSubmissionRepository.find({
-    //   round: {
-    //     project: {
-    //       id: projectId,
-    //     },
-    //     roundNumber: project.currentRound,
-    //   },
-    // });
-
-    // // extract all flattened parameters
-    // const flattenedParameters = submissions.map((submission) => {
-    //   return submission.flattenedParameters;
-    // });
-
-    // // do homomorphic aggregation
-
-    // // get project current round
-    // const currentRound = project.currentRound + 1;
-
-    // // upload to IPFS
-
-    // // get ipfs hash
-
-    // // use the ipfs hash as globalModelIPFSLink
-
-    // // create new round
-    // const round = await this.roundRepository.create({
-    //   projectId: projectId,
-    //   roundNumber: currentRound,
-    //   globalModelIPFSLink: '',
-    // });
   }
 
   // add submission for round
@@ -199,36 +258,48 @@ export class RoundService {
     });
 
     if (!project) {
-      throw new Error('Project not found');
+      throw new BadRequestException('Project not found');
+    }
+
+    //check if project is in running state
+    if (project.status !== ProjectStatusType.RUNNING) {
+      throw new BadRequestException('Project is not in running state');
     }
 
     // get the round
     const round = await this.roundRepository.findOne({
-      id: body.roundId,
+      roundNumber: body.roundNumber,
+      project: project,
     });
 
     if (!round) {
-      throw new Error('Round not found');
+      throw new BadRequestException('Round not found');
     }
 
     // check if ady submitted
     const participantSubmission =
       await this.participantSubmissionRepository.findOne({
-        project: project,
-        round: round,
-        participant: user,
+        project: {
+          id: project.id,
+        },
+        round: {
+          id: round.id,
+        },
+        participant: {
+          id: user.id,
+        },
       });
 
     if (participantSubmission) {
-      throw new Error('Already submitted');
+      throw new BadRequestException('Already submitted');
     }
 
     // insert new record
     await this.participantSubmissionRepository.create({
-      participantId: user.id,
-      roundId: round.id,
-      projectId: project.id,
-      ipfsLink: body.ipfsLink,
+      participant: user,
+      round: round,
+      project: project,
+      IPFSLink: body.ipfsLink,
       encryptedParameters: body.encryptedParameters,
     });
   }
@@ -236,7 +307,7 @@ export class RoundService {
   // get round detail and all submission for that round
   public async getRoundDetail(
     projectId: number,
-    roundId: number,
+    roundNumber: number,
   ): Promise<RoundDetailResponseDto> {
     // get the project
     const project = await this.projectRepository.findOne({
@@ -244,31 +315,37 @@ export class RoundService {
     });
 
     if (!project) {
-      throw new Error('Project not found');
+      throw new BadRequestException('Project not found');
     }
 
     // get the round
     const round = await this.roundRepository.findOne({
-      id: roundId,
+      project: project,
+      roundNumber: roundNumber,
     });
 
     if (!round) {
-      throw new Error('Round not found');
+      throw new BadRequestException('Round not found');
     }
 
     // get all submission for that round
-    const submissions = await this.participantSubmissionRepository.find({
-      round: {
-        id: round.id,
+    const submissions = await this.participantSubmissionRepository.find(
+      {
+        round: {
+          id: round.id,
+        },
+        project: {
+          id: project.id,
+        },
       },
-      project: {
-        id: project.id,
+      {
+        relations: ['participant'],
       },
-    });
+    );
 
     return {
       round,
-      submissions,
+      submissions: classToPlain(submissions) as any,
     };
   }
 
@@ -300,9 +377,9 @@ export class RoundService {
         n,
       ]);
       return result;
-    } catch (error) {
-      console.error('Error encrypting array:', error);
-      throw error;
+    } catch (BadRequestException) {
+      console.log('BadRequestException encrypting array:', BadRequestException);
+      throw BadRequestException;
     }
   }
 
@@ -319,9 +396,9 @@ export class RoundService {
         n,
       ]);
       return result;
-    } catch (error) {
-      console.error('Error decrypting array:', error);
-      throw error;
+    } catch (BadRequestException) {
+      console.log('BadRequestException decrypting array:', BadRequestException);
+      throw BadRequestException;
     }
   }
 
@@ -333,9 +410,9 @@ export class RoundService {
         n,
       ]);
       return result;
-    } catch (error) {
-      console.error('Error encrypting array:', error);
-      throw error;
+    } catch (BadRequestException) {
+      console.log('BadRequestException encrypting array:', BadRequestException);
+      throw BadRequestException;
     }
   }
 
@@ -345,9 +422,12 @@ export class RoundService {
         'generate_keypair',
       ]);
       return result;
-    } catch (error) {
-      console.error('Error generating keypair:', error);
-      throw error;
+    } catch (BadRequestException) {
+      console.log(
+        'BadRequestException generating keypair:',
+        BadRequestException,
+      );
+      throw BadRequestException;
     }
   }
 }

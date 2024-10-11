@@ -47,6 +47,9 @@ export interface OthersConfig {
   referralCodeMaximumUsage: number;
   defaultRole: string;
   require2FA: boolean;
+  pinataJwt: string;
+  pinataApiKey: string;
+  pinataApiSecret: string;
 }
 
 // @notice

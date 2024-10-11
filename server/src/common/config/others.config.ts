@@ -9,4 +9,7 @@ export default registerAs('others', () => ({
   referralCodeMaximumUsage: process.env.REFERRAL_CODE_MAXIMUM_USAGE,
   defaultRole: process.env.DEFAULT_ROLE,
   require2FA: process.env.REQUIRE_2FA === 'true' ? true : false,
+  pinataJwt: process.env.PINATA_JWT,
+  pinataApiKey: process.env.PINATA_API_KEY,
+  pinataApiSecret: process.env.PINATA_API_SECRET,
 }));

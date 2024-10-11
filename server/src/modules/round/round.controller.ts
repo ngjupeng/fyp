@@ -11,6 +11,7 @@ import {
 import {
   ApiBearerAuth,
   ApiOperation,
+  ApiProperty,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -48,12 +49,12 @@ export class RoundController {
   @ApiResponse({ status: 400, description: 'Bad Request' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   @UseGuards(JwtAuthGuard)
-  @Get('/:projectId/:roundId')
+  @Get('/:projectId/:roundNumber')
   public async getRoundDetail(
     @Param('projectId') projectId: number,
-    @Param('roundId') roundId: number,
+    @Param('roundNumber') roundNumber: number,
   ): Promise<RoundDetailResponseDto> {
-    return this.roundService.getRoundDetail(projectId, roundId);
+    return this.roundService.getRoundDetail(projectId, roundNumber);
   }
 
   // proceed next round sandbox
@@ -66,6 +67,6 @@ export class RoundController {
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   @Post('/proceed-next-round-sandbox')
   public async proceedNextRoundSandbox() {
-    this.roundService.proceedToNextRound();
+    this.roundService.proceedToNextRoundSandbox();
   }
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -8,6 +8,9 @@ import {
 import { CreateSupportTokenDto } from './supported-token.dto';
 import { SupportedTokenService } from './supported-token.service';
 import { SupportedTokenEntity } from './supported-token.entity';
+import { JwtAuthGuard, RoleGuard } from 'src/common/guards';
+import { Role } from 'src/common/enums/role';
+import { Roles } from 'src/common/decorators/roles';
 
 @ApiBearerAuth()
 @ApiTags('Supported Token')
@@ -19,6 +22,8 @@ export class SupportedTokenController {
   @ApiResponse({ status: 201, description: 'Token created successfully' })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles([Role.ADMIN])
   @Post('/create')
   public async createSupportedToken(
     @Body() body: CreateSupportTokenDto,

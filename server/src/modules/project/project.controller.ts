@@ -44,7 +44,7 @@ export class ProjectController {
   @ApiResponse({ status: 400, description: 'Bad Request' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   @Get('/all')
-  public async getAllProjects(@Request() req: RequestWithUser): Promise<any> {
+  public async getAllProjects(): Promise<any> {
     return this.projectService.getAllProjects();
   }
 
@@ -74,5 +74,33 @@ export class ProjectController {
     @Param('id') projectId: number,
   ): Promise<any> {
     return this.projectService.startProject(req.user, projectId);
+  }
+
+  // get project current round
+  @ApiOperation({ summary: 'Get project current round' })
+  @ApiResponse({
+    status: 200,
+    description: 'Project current round fetched successfully',
+  })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  @Get('/:id/current-round')
+  public async getProjectCurrentRound(
+    @Param('id') projectId: number,
+  ): Promise<any> {
+    return this.projectService.getProjectCurrentRound(projectId);
+  }
+
+  // get project details (include all rounds of the project)
+  @ApiOperation({ summary: 'Get project details' })
+  @ApiResponse({
+    status: 200,
+    description: 'Project details fetched successfully',
+  })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  @Get('/details/:id')
+  public async getProjectDetails(@Param('id') projectId: number): Promise<any> {
+    return this.projectService.getProjectDetails(projectId);
   }
 }

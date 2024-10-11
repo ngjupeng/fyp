@@ -18,6 +18,6 @@ export class ParticipantSubmissionEntity extends BaseEntity {
   @Column({ type: 'varchar' })
   public IPFSLink: string;
 
-  @Column({ type: 'text' })
-  public encryptedParameters: string;
+  @Column({ type: 'text', array: true })
+  public encryptedParameters: string[];
 }

@@ -99,6 +99,9 @@ describe('Auth Service', () => {
         referralCodeMaximumUsage: 10,
         defaultRole: 'user',
         require2FA: false,
+        pinataJwt: 'pinata_jwt',
+        pinataApiKey: 'pinata_api_key',
+        pinataApiSecret: 'pinata_api_secret',
       },
       mailConfig: {
         mailgun: {

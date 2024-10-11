@@ -10,6 +10,7 @@ import {
 } from 'class-validator';
 import { ProjectStatusType } from 'src/common/enums/project';
 import { UserEntity } from '../user/user.entity';
+import { ProjectEntity } from './project.entity';
 
 export class ProjectBase {
   @ApiProperty()
@@ -35,7 +36,12 @@ export class ProjectBase {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  public publicKey: string;
+  public n: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  public g: string;
 
   @ApiProperty()
   @IsNumber()
@@ -101,4 +107,8 @@ export class ProjectDto extends ProjectBase {
   @ApiProperty({ type: [UserEntity] })
   @IsArray()
   public participants: UserEntity[];
+}
+
+export class ProjectResponseDto extends ProjectEntity {
+  public participantsCount: number;
 }
