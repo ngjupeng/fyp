@@ -9,6 +9,7 @@ import {
 import { ParticipantSubmissionEntity } from './participant-submission.entity';
 import {
   CreateParticipantSubmissionDto,
+  ParticipantSubmissionDto,
   ParticipantSubmissionResponseDto,
 } from './participant-submission.dto';
 
@@ -35,7 +36,7 @@ export class ParticipantSubmissionRepository {
   }
 
   public async create(
-    dto: ParticipantSubmissionResponseDto,
+    dto: ParticipantSubmissionDto,
   ): Promise<ParticipantSubmissionEntity> {
     return this.participantSubmissionEntityRepository.create(dto).save();
   }

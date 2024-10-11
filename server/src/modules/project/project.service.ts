@@ -152,10 +152,7 @@ export class ProjectService {
     await this.roundService.createFirstRound(projectId);
   }
 
-  public async endProject(
-    user: UserEntity,
-    agreementAddress: string,
-  ): Promise<void> {
+  private async endProject(agreementAddress: string): Promise<void> {
     // get project
     const project = await this.projectRepository.findOne({
       agreementAddress,
@@ -168,11 +165,6 @@ export class ProjectService {
     // check if project is running
     if (project.status !== ProjectStatusType.RUNNING) {
       throw new BadRequestException('Project is not running');
-    }
-
-    // only project creator can end the project earlier
-    if (project.creator.id !== user.id) {
-      throw new BadRequestException('Only the creator can end the project');
     }
 
     project.status = ProjectStatusType.COMPLETED;
@@ -188,7 +180,9 @@ export class ProjectService {
       abi: abis.federatedCore.abi.abi,
       eventName: 'AgreementFinished',
       onLogs: (logs) => {
-        console.log(logs);
+        const event = logs[0] as any;
+        const agreementAddress = event?.args?.agreement;
+        this.endProject(agreementAddress);
       },
     });
   }

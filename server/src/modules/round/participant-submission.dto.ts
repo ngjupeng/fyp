@@ -24,8 +24,8 @@ export class CreateParticipantSubmissionDto {
     description: 'The flattened parameters array for the submission',
   })
   @IsNotEmpty()
-  @IsArray()
-  encryptedParameters: string[];
+  @IsString()
+  encryptedParameters: string;
 }
 
 export class ParticipantSubmissionResponseDto {
@@ -48,6 +48,32 @@ export class ParticipantSubmissionResponseDto {
   @IsNotEmpty()
   @IsArray()
   encryptedParameters: string[];
+
+  @ApiProperty({ description: 'The ID of the participant' })
+  @IsNotEmpty()
+  participant: UserEntity;
+}
+
+export class ParticipantSubmissionDto {
+  @ApiProperty({ description: 'The ID of the project' })
+  @IsNotEmpty()
+  project: ProjectEntity;
+
+  @ApiProperty({ description: 'The ID of the round' })
+  @IsNotEmpty()
+  round: RoundEntity;
+
+  @ApiProperty({ description: 'The IPFS link for the submission' })
+  @IsNotEmpty()
+  @IsString()
+  IPFSLink: string;
+
+  @ApiProperty({
+    description: 'The flattened parameters array for the submission',
+  })
+  @IsNotEmpty()
+  @IsString()
+  encryptedParameters: string;
 
   @ApiProperty({ description: 'The ID of the participant' })
   @IsNotEmpty()

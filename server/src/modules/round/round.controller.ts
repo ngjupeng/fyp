@@ -67,6 +67,8 @@ export class RoundController {
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   @Post('/proceed-next-round-sandbox')
   public async proceedNextRoundSandbox() {
-    this.roundService.proceedToNextRoundSandbox();
+    this.roundService.proceedToNextRound(
+      '0x3fEE97a3D244e7bD9aA68a93DeB50969dedb67a7',
+    );
   }
 }

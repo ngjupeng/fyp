@@ -66,7 +66,7 @@ export class RoundService {
     });
   }
 
-  private async proceedToNextRound(agreementAddress: string): Promise<any> {
+  public async proceedToNextRound(agreementAddress: string): Promise<any> {
     // get the project
     let project = await this.projectRepository.findOne({
       agreementAddress: agreementAddress,
@@ -97,7 +97,6 @@ export class RoundService {
       const encryptedParameters = submissions.map((submission) => {
         return submission.encryptedParameters;
       });
-      console.log(encryptedParameters);
 
       const result = await this.homomorphicAddition(
         encryptedParameters.join('&'),
@@ -146,6 +145,8 @@ export class RoundService {
         roundNumber: currentRound,
         globalModelIPFSLink: ipfsHash,
       });
+      project.currentRound = currentRound;
+      await this.projectRepository.updateOne({ id: project.id }, project);
     } catch (BadRequestException) {
       console.log(BadRequestException);
       throw new BadRequestException(BadRequestException);
@@ -274,6 +275,11 @@ export class RoundService {
 
     if (!round) {
       throw new BadRequestException('Round not found');
+    }
+
+    // check if round == project.currentRound
+    if (round.roundNumber !== project.currentRound) {
+      throw new BadRequestException('Round number does not match');
     }
 
     // check if ady submitted
