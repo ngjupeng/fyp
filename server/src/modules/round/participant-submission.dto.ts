@@ -22,7 +22,7 @@ export class CreateParticipantSubmissionDto {
   })
   @IsNotEmpty()
   @IsArray()
-  flattenedParameters: string[];
+  encryptedParameters: string;
 }
 
 export class ParticipantSubmissionResponseDto extends CreateParticipantSubmissionDto {

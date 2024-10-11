@@ -55,4 +55,17 @@ export class RoundController {
   ): Promise<RoundDetailResponseDto> {
     return this.roundService.getRoundDetail(projectId, roundId);
   }
+
+  // proceed next round sandbox
+  @ApiOperation({ summary: 'Proceed to next round sandbox' })
+  @ApiResponse({
+    status: 200,
+    description: 'Next round sandbox proceed successfully',
+  })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  @Post('/proceed-next-round-sandbox')
+  public async proceedNextRoundSandbox() {
+    this.roundService.proceedToNextRound();
+  }
 }

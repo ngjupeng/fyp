@@ -30,7 +30,10 @@ export class ProjectEntity extends BaseEntity {
   public tokenAddress: string;
 
   @Column({ type: 'varchar' })
-  public publicKey: string;
+  public g: string;
+
+  @Column({ type: 'varchar' })
+  public n: string;
 
   @Column({ type: 'int' })
   public minimumReputation: number;
