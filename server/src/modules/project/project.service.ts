@@ -1,6 +1,10 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 
-import { ProjectBase, ProjectResponseDto } from './project.dto';
+import {
+  ProjectBase,
+  ProjectResponseDto,
+  ProjectStatsDto,
+} from './project.dto';
 import { UserEntity } from '../user/user.entity';
 import { ProjectRepository } from './project.repository';
 import { ProjectStatusType } from 'src/common/enums/project';
@@ -198,5 +202,43 @@ export class ProjectService {
       { relations: ['rounds'] },
     );
     return project;
+  }
+
+  public async getProjectStats(): Promise<ProjectStatsDto> {
+    // get all projects, calculate number of ongoing, pending and completed projects
+    const projects = await this.projectRepository.find({});
+    const ongoingProjects = projects.filter(
+      (project) => project.status === ProjectStatusType.RUNNING,
+    );
+    const pendingProjects = projects.filter(
+      (project) => project.status === ProjectStatusType.PENDING,
+    );
+    const completedProjects = projects.filter(
+      (project) => project.status === ProjectStatusType.COMPLETED,
+    );
+
+    return {
+      ongoingProjects: ongoingProjects.length,
+      pendingProjects: pendingProjects.length,
+      completedProjects: completedProjects.length,
+    };
+  }
+
+  public async getMyProjects(user: UserEntity): Promise<ProjectResponseDto[]> {
+    const projects = await this.projectRepository.find(
+      {
+        participants: { id: user.id },
+      },
+      { relations: ['participants'] },
+    );
+
+    return projects.map(
+      (project) =>
+        ({
+          ...project,
+          participants: [],
+          participantsCount: project.participants.length,
+        }) as ProjectResponseDto,
+    );
   }
 }

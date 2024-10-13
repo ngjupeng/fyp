@@ -107,3 +107,9 @@ export class ProjectDto extends ProjectBase {
 export class ProjectResponseDto extends ProjectEntity {
   public participantsCount: number;
 }
+
+export class ProjectStatsDto {
+  public ongoingProjects: number;
+  public pendingProjects: number;
+  public completedProjects: number;
+}

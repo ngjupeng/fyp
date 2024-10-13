@@ -195,7 +195,6 @@ export class RoundService {
         minimumReputation: 1,
         g: '0x0',
         n: '0x0',
-        tokenAddress: '0x0',
         totalRewardAmount: 5,
         verificationDatasetURL: 'test',
       });

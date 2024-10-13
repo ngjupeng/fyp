@@ -16,7 +16,7 @@ import {
 } from '@nestjs/swagger';
 import { ProjectService } from './project.service';
 import { RequestWithUser } from 'src/common/interfaces';
-import { ProjectBase, ProjectDto } from './project.dto';
+import { ProjectBase, ProjectDto, ProjectStatsDto } from './project.dto';
 import { JwtAuthGuard } from 'src/common/guards';
 
 @ApiBearerAuth()
@@ -102,5 +102,29 @@ export class ProjectController {
   @Get('/details/:id')
   public async getProjectDetails(@Param('id') projectId: number): Promise<any> {
     return this.projectService.getProjectDetails(projectId);
+  }
+
+  // get project stats, number of ongoing project, pending and completed projects
+  @ApiOperation({ summary: 'Get project stats' })
+  @ApiResponse({
+    status: 200,
+    description: 'Project stats fetched successfully',
+  })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  @Get('/stats')
+  public async getProjectStats(): Promise<ProjectStatsDto> {
+    return this.projectService.getProjectStats();
+  }
+
+  // endpoint for getting my project, project created by me, or joined project
+  @ApiOperation({ summary: 'Get my projects' })
+  @ApiResponse({ status: 200, description: 'My projects fetched successfully' })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  @UseGuards(JwtAuthGuard)
+  @Get('/my')
+  public async getMyProjects(@Request() req: RequestWithUser): Promise<any> {
+    return this.projectService.getMyProjects(req.user);
   }
 }
