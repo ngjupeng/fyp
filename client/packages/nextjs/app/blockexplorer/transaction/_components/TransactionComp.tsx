@@ -64,7 +64,7 @@ const TransactionComp = ({ txHash }: { txHash: Hash }) => {
                   <strong>From:</strong>
                 </td>
                 <td>
-                  <Address address={transaction.from} format="long" onlyEnsOrAddress />
+                  <Address address={transaction.from} format="long" />
                 </td>
               </tr>
               <tr>
@@ -73,11 +73,11 @@ const TransactionComp = ({ txHash }: { txHash: Hash }) => {
                 </td>
                 <td>
                   {!receipt?.contractAddress ? (
-                    transaction.to && <Address address={transaction.to} format="long" onlyEnsOrAddress />
+                    transaction.to && <Address address={transaction.to} format="long" />
                   ) : (
                     <span>
                       Contract Creation:
-                      <Address address={receipt.contractAddress} format="long" onlyEnsOrAddress />
+                      <Address address={receipt.contractAddress} format="long" />
                     </span>
                   )}
                 </td>

@@ -9,31 +9,26 @@ import { MockERC20 } from "../src/MockERC20.sol";
 
 /// @dev See the Solidity Scripting tutorial: https://book.getfoundry.sh/tutorials/solidity-scripting
 contract Deploy is Script {
-    // forge script script/Deploy.s.sol --rpc-url fhenix --broadcast --private-key
-    // <PRIVATE_KEY> --skip-simulation --verify --verifier blockscout
-    // --verifier-url
+  // forge script script/Deploy.s.sol --rpc-url fhenix --broadcast --private-key
+  // <PRIVATE_KEY> --skip-simulation --verify --verifier blockscout
+  // --verifier-url
 
-    // cast call --rpc-url https://api.helium.fhenix.zone 0x3fEE97a3D244e7bD9aA68a93DeB50969dedb67a7 "owner()(address)"
+  // cast call --rpc-url https://api.helium.fhenix.zone 0x3fEE97a3D244e7bD9aA68a93DeB50969dedb67a7 "owner()(address)"
 
-    // cast send --private-key <PRIVATE_KEY> --rpc-url
-    // https://api.helium.fhenix.zone 0x3fEE97a3D244e7bD9aA68a93DeB50969dedb67a7  "proceedNextRoundSandbox()"
+  // cast send --private-key <PRIVATE_KEY> --rpc-url
+  // https://api.helium.fhenix.zone 0x3fEE97a3D244e7bD9aA68a93DeB50969dedb67a7  "proceedNextRoundSandbox()"
 
-    // cast send --private-key <PRIVATE_KEY> --rpc-url
-    // https://api.helium.fhenix.zone 0x3fEE97a3D244e7bD9aA68a93DeB50969dedb67a7  "finishAgreementSandbox()"
-    function run() public returns (address, address, address) {
-        vm.startBroadcast(0x3B584D901D4aEFC30950fd5af50882413E013A60);
-        FederatedCore core = new FederatedCore(msg.sender);
-        MockERC20 token = new MockERC20("MockERC20", "MCK");
+  // cast send --private-key <PRIVATE_KEY> --rpc-url
+  // https://api.helium.fhenix.zone 0x3fEE97a3D244e7bD9aA68a93DeB50969dedb67a7  "finishAgreementSandbox()"
+  function run() public returns (address, address, address) {
+    vm.startBroadcast(0x3B584D901D4aEFC30950fd5af50882413E013A60);
+    FederatedCore core = new FederatedCore(msg.sender);
 
-        // add mock token as supported token
-        core.addSupportedToken(address(token));
+    // create agreement
 
-        // create agreement
-        // approve agreement to spend token
-        token.approve(address(core), 20 ** 18);
-        address agreement = core.createAgreement(msg.sender, address(token), 10 ** 18, 10 ** 18, 5, 0, 5);
-        vm.stopBroadcast();
+    address agreement = core.createAgreement(msg.sender, 10 ** 18, 10 ** 18, 5, 0, 5);
+    vm.stopBroadcast();
 
-        return (agreement, address(token), address(core));
-    }
+    return (agreement, address(core));
+  }
 }

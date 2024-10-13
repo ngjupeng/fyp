@@ -26,15 +26,6 @@ export class ProjectService {
     user: UserEntity,
     body: ProjectBase,
   ): Promise<void> {
-    // check if token address is supported
-    const supportedTokenAddress = await this.supportedTokenService.isSupported(
-      body.tokenAddress,
-    );
-
-    if (!supportedTokenAddress) {
-      throw new BadRequestException('Token address is not supported');
-    }
-
     // verify verification dataset is url
     if (!isURL(body.verificationDatasetURL)) {
       throw new BadRequestException('Verification dataset is not a valid url');

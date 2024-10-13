@@ -27,9 +27,6 @@ export class ProjectEntity extends BaseEntity {
   public verificationDatasetURL: string;
 
   @Column({ type: 'varchar' })
-  public tokenAddress: string;
-
-  @Column({ type: 'varchar' })
   public g: string;
 
   @Column({ type: 'varchar' })

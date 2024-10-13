@@ -36,7 +36,6 @@ export class Migrationsts1728196211597 implements MigrationInterface {
                 "name" character varying NOT NULL,
                 "description" character varying NOT NULL,
                 "verification_dataset_url" character varying NOT NULL,
-                "token_address" character varying NOT NULL,
                 "public_key" character varying NOT NULL,
                 "minimum_reputation" integer NOT NULL,
                 "collateral_amount" integer NOT NULL,

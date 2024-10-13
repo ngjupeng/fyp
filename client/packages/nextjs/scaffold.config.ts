@@ -1,4 +1,26 @@
 import * as chains from "viem/chains";
+import { defineChain } from 'viem'
+
+export const fhenix = defineChain({
+  id: 8008135,
+  name: 'fhenix',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'Ether',
+    symbol: 'ETH',
+  },
+  rpcUrls: {
+    default: {
+      http: ['https://api.helium.fhenix.zone'],
+      webSocket: ['	wss://api.helium.fhenix.zone:8548'],
+    },
+  },
+  blockExplorers: {
+    default: { name: 'Explorer', url: 'https://explorer.helium.fhenix.zone' },
+  },
+  contracts: {},
+});
+
 
 export type ScaffoldConfig = {
   targetNetworks: readonly chains.Chain[];
@@ -10,7 +32,7 @@ export type ScaffoldConfig = {
 
 const scaffoldConfig = {
   // The networks on which your DApp is live
-  targetNetworks: [chains.hardhat],
+  targetNetworks: [fhenix],
 
   // The interval at which your front-end polls the RPC servers for new data
   // it has no effect if you only target the local network (default is 4000)

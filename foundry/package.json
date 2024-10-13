@@ -2,6 +2,7 @@
   "name": "@fhenixprotocol/fhenix-foundry-template",
   "description": "Foundry-based template for developing FHE Solidity smart contracts with Fhenix",
   "version": "1.0.0",
+  "type": "module",
   "author": {
     "name": "Fhenix Protocol",
     "url": "https://github.com/fhenixprotocol"

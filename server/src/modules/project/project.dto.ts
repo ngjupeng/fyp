@@ -31,11 +31,6 @@ export class ProjectBase {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  public tokenAddress: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
   public n: string;
 
   @ApiProperty()

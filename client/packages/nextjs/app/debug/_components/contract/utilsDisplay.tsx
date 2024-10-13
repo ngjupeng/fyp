@@ -30,7 +30,7 @@ export const displayTxResult = (
 
   if (typeof displayContent === "string") {
     if (isAddress(displayContent)) {
-      return <Address address={displayContent} size={fontSize} onlyEnsOrAddress />;
+      return <Address address={displayContent} size={fontSize} />;
     }
 
     if (isHex(displayContent)) {
