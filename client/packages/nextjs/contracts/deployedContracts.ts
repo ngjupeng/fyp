@@ -5,169 +5,169 @@
 import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 
 const deployedContracts = {
-    8008135: {
-        FederatedCore: {
-            address: "0x3fEE97a3D244e7bD9aA68a93DeB50969dedb67a7",
-            abi: [
-                {
-                  "type": "constructor",
-                  "inputs": [{ "name": "initialOwner", "type": "address", "internalType": "address" }],
-                  "stateMutability": "nonpayable"
-                },
-                {
-                  "type": "function",
-                  "name": "addReputation",
-                  "inputs": [{ "name": "user", "type": "address", "internalType": "address" }],
-                  "outputs": [],
-                  "stateMutability": "nonpayable"
-                },
-                {
-                  "type": "function",
-                  "name": "addSupportedToken",
-                  "inputs": [{ "name": "tokenAddress", "type": "address", "internalType": "address" }],
-                  "outputs": [],
-                  "stateMutability": "nonpayable"
-                },
-                {
-                  "type": "function",
-                  "name": "createAgreement",
-                  "inputs": [
-                    { "name": "_owner", "type": "address", "internalType": "address" },
-                    { "name": "_tokenAddress", "type": "address", "internalType": "address" },
-                    { "name": "_totalRewards", "type": "uint256", "internalType": "uint256" },
-                    { "name": "_collateralAmount", "type": "uint256", "internalType": "uint256" },
-                    { "name": "_maximumParticipants", "type": "uint256", "internalType": "uint256" },
-                    { "name": "_reputationThreshold", "type": "uint256", "internalType": "uint256" },
-                    { "name": "_maximumRounds", "type": "uint256", "internalType": "uint256" }
-                  ],
-                  "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
-                  "stateMutability": "nonpayable"
-                },
-                {
-                  "type": "function",
-                  "name": "emitAgreementFinished",
-                  "inputs": [
-                    { "name": "agreement", "type": "address", "internalType": "address" },
-                    { "name": "round", "type": "uint256", "internalType": "uint256" }
-                  ],
-                  "outputs": [],
-                  "stateMutability": "nonpayable"
-                },
-                {
-                  "type": "function",
-                  "name": "emitAgreementProceedNextRound",
-                  "inputs": [
-                    { "name": "agreement", "type": "address", "internalType": "address" },
-                    { "name": "round", "type": "uint256", "internalType": "uint256" }
-                  ],
-                  "outputs": [],
-                  "stateMutability": "nonpayable"
-                },
-                {
-                  "type": "function",
-                  "name": "getReputation",
-                  "inputs": [{ "name": "user", "type": "address", "internalType": "address" }],
-                  "outputs": [{ "name": "", "type": "int256", "internalType": "int256" }],
-                  "stateMutability": "view"
-                },
-                {
-                  "type": "function",
-                  "name": "owner",
-                  "inputs": [],
-                  "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
-                  "stateMutability": "view"
-                },
-                {
-                  "type": "function",
-                  "name": "removeSupportedToken",
-                  "inputs": [{ "name": "tokenAddress", "type": "address", "internalType": "address" }],
-                  "outputs": [],
-                  "stateMutability": "nonpayable"
-                },
-                { "type": "function", "name": "renounceOwnership", "inputs": [], "outputs": [], "stateMutability": "nonpayable" },
-                {
-                  "type": "function",
-                  "name": "subtractReputation",
-                  "inputs": [{ "name": "user", "type": "address", "internalType": "address" }],
-                  "outputs": [],
-                  "stateMutability": "nonpayable"
-                },
-                {
-                  "type": "function",
-                  "name": "transferOwnership",
-                  "inputs": [{ "name": "newOwner", "type": "address", "internalType": "address" }],
-                  "outputs": [],
-                  "stateMutability": "nonpayable"
-                },
-                {
-                  "type": "event",
-                  "name": "AgreementCreated",
-                  "inputs": [
-                    { "name": "agreement", "type": "address", "indexed": true, "internalType": "address" },
-                    { "name": "owner", "type": "address", "indexed": true, "internalType": "address" },
-                    { "name": "tokenAddress", "type": "address", "indexed": true, "internalType": "address" },
-                    { "name": "totalRewards", "type": "uint256", "indexed": false, "internalType": "uint256" },
-                    { "name": "collateralAmount", "type": "uint256", "indexed": false, "internalType": "uint256" },
-                    { "name": "maximumParticipants", "type": "uint256", "indexed": false, "internalType": "uint256" },
-                    { "name": "reputationThreshold", "type": "uint256", "indexed": false, "internalType": "uint256" }
-                  ],
-                  "anonymous": false
-                },
-                {
-                  "type": "event",
-                  "name": "AgreementFinished",
-                  "inputs": [
-                    { "name": "agreement", "type": "address", "indexed": true, "internalType": "address" },
-                    { "name": "round", "type": "uint256", "indexed": true, "internalType": "uint256" }
-                  ],
-                  "anonymous": false
-                },
-                {
-                  "type": "event",
-                  "name": "AgreementProceedNextRound",
-                  "inputs": [
-                    { "name": "agreement", "type": "address", "indexed": true, "internalType": "address" },
-                    { "name": "round", "type": "uint256", "indexed": true, "internalType": "uint256" }
-                  ],
-                  "anonymous": false
-                },
-                {
-                  "type": "event",
-                  "name": "OwnershipTransferred",
-                  "inputs": [
-                    { "name": "previousOwner", "type": "address", "indexed": true, "internalType": "address" },
-                    { "name": "newOwner", "type": "address", "indexed": true, "internalType": "address" }
-                  ],
-                  "anonymous": false
-                },
-                {
-                  "type": "event",
-                  "name": "ReputationAdded",
-                  "inputs": [{ "name": "user", "type": "address", "indexed": true, "internalType": "address" }],
-                  "anonymous": false
-                },
-                {
-                  "type": "event",
-                  "name": "ReputationSubtracted",
-                  "inputs": [{ "name": "user", "type": "address", "indexed": true, "internalType": "address" }],
-                  "anonymous": false
-                },
-                { "type": "error", "name": "NotAgreement", "inputs": [] },
-                {
-                  "type": "error",
-                  "name": "OwnableInvalidOwner",
-                  "inputs": [{ "name": "owner", "type": "address", "internalType": "address" }]
-                },
-                {
-                  "type": "error",
-                  "name": "OwnableUnauthorizedAccount",
-                  "inputs": [{ "name": "account", "type": "address", "internalType": "address" }]
-                },
-                { "type": "error", "name": "TokenNotSupported", "inputs": [] },
-                { "type": "error", "name": "TransferFailed", "inputs": [] }
-              ],
+  8008135: {
+    FederatedCore: {
+      address: "0x3fEE97a3D244e7bD9aA68a93DeB50969dedb67a7",
+      abi: [
+        {
+          type: "constructor",
+          inputs: [{ name: "initialOwner", type: "address", internalType: "address" }],
+          stateMutability: "nonpayable",
         },
-    }
+        {
+          type: "function",
+          name: "addReputation",
+          inputs: [{ name: "user", type: "address", internalType: "address" }],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "addSupportedToken",
+          inputs: [{ name: "tokenAddress", type: "address", internalType: "address" }],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "createAgreement",
+          inputs: [
+            { name: "_owner", type: "address", internalType: "address" },
+            { name: "_tokenAddress", type: "address", internalType: "address" },
+            { name: "_totalRewards", type: "uint256", internalType: "uint256" },
+            { name: "_collateralAmount", type: "uint256", internalType: "uint256" },
+            { name: "_maximumParticipants", type: "uint256", internalType: "uint256" },
+            { name: "_reputationThreshold", type: "uint256", internalType: "uint256" },
+            { name: "_maximumRounds", type: "uint256", internalType: "uint256" },
+          ],
+          outputs: [{ name: "", type: "address", internalType: "address" }],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "emitAgreementFinished",
+          inputs: [
+            { name: "agreement", type: "address", internalType: "address" },
+            { name: "round", type: "uint256", internalType: "uint256" },
+          ],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "emitAgreementProceedNextRound",
+          inputs: [
+            { name: "agreement", type: "address", internalType: "address" },
+            { name: "round", type: "uint256", internalType: "uint256" },
+          ],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "getReputation",
+          inputs: [{ name: "user", type: "address", internalType: "address" }],
+          outputs: [{ name: "", type: "int256", internalType: "int256" }],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "owner",
+          inputs: [],
+          outputs: [{ name: "", type: "address", internalType: "address" }],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "removeSupportedToken",
+          inputs: [{ name: "tokenAddress", type: "address", internalType: "address" }],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        { type: "function", name: "renounceOwnership", inputs: [], outputs: [], stateMutability: "nonpayable" },
+        {
+          type: "function",
+          name: "subtractReputation",
+          inputs: [{ name: "user", type: "address", internalType: "address" }],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "transferOwnership",
+          inputs: [{ name: "newOwner", type: "address", internalType: "address" }],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "event",
+          name: "AgreementCreated",
+          inputs: [
+            { name: "agreement", type: "address", indexed: true, internalType: "address" },
+            { name: "owner", type: "address", indexed: true, internalType: "address" },
+            { name: "tokenAddress", type: "address", indexed: true, internalType: "address" },
+            { name: "totalRewards", type: "uint256", indexed: false, internalType: "uint256" },
+            { name: "collateralAmount", type: "uint256", indexed: false, internalType: "uint256" },
+            { name: "maximumParticipants", type: "uint256", indexed: false, internalType: "uint256" },
+            { name: "reputationThreshold", type: "uint256", indexed: false, internalType: "uint256" },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "event",
+          name: "AgreementFinished",
+          inputs: [
+            { name: "agreement", type: "address", indexed: true, internalType: "address" },
+            { name: "round", type: "uint256", indexed: true, internalType: "uint256" },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "event",
+          name: "AgreementProceedNextRound",
+          inputs: [
+            { name: "agreement", type: "address", indexed: true, internalType: "address" },
+            { name: "round", type: "uint256", indexed: true, internalType: "uint256" },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "event",
+          name: "OwnershipTransferred",
+          inputs: [
+            { name: "previousOwner", type: "address", indexed: true, internalType: "address" },
+            { name: "newOwner", type: "address", indexed: true, internalType: "address" },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "event",
+          name: "ReputationAdded",
+          inputs: [{ name: "user", type: "address", indexed: true, internalType: "address" }],
+          anonymous: false,
+        },
+        {
+          type: "event",
+          name: "ReputationSubtracted",
+          inputs: [{ name: "user", type: "address", indexed: true, internalType: "address" }],
+          anonymous: false,
+        },
+        { type: "error", name: "NotAgreement", inputs: [] },
+        {
+          type: "error",
+          name: "OwnableInvalidOwner",
+          inputs: [{ name: "owner", type: "address", internalType: "address" }],
+        },
+        {
+          type: "error",
+          name: "OwnableUnauthorizedAccount",
+          inputs: [{ name: "account", type: "address", internalType: "address" }],
+        },
+        { type: "error", name: "TokenNotSupported", inputs: [] },
+        { type: "error", name: "TransferFailed", inputs: [] },
+      ],
+    },
+  },
 } as const;
 
 export default deployedContracts satisfies GenericContractsDeclaration;

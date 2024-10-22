@@ -4,9 +4,12 @@ import React, { useCallback, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Router from "next/router";
+import toast from "react-hot-toast";
 import { Bars3Icon, BugAntIcon } from "@heroicons/react/24/outline";
 import { FaucetButton, RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useOutsideClick } from "~~/hooks/scaffold-eth";
+import useLogOut from "~~/hooks/server/useLogOut";
 
 type HeaderMenuLink = {
   label: string;
@@ -62,6 +65,7 @@ export const Header = () => {
     burgerMenuRef,
     useCallback(() => setIsDrawerOpen(false), []),
   );
+  const { mutate: logout } = useLogOut(handleLogoutSuccess, handleLogoutFaield);
 
   const pathname = usePathname();
 
@@ -71,6 +75,24 @@ export const Header = () => {
     { label: "Bind Wallet", href: "/bind-wallet" },
     { label: "Create Project", href: "/create-project" },
   ];
+
+  function handleLogoutSuccess() {
+    Router.replace("/login");
+    localStorage.removeItem("accessToken");
+    toast.dismiss();
+  }
+  /* ╭━━━━━━━━━━━━━━━━━━━━━ server hooks failed handlers ━━━━━━━━━━━━━━━━━━━━━━╮ */
+  function handleLogoutFaield() {
+    toast.dismiss();
+    toast.error("Sign out failed");
+  }
+
+  /* ╭━━━━━━━━━━━━━━━━━━━━━ local function handlers ━━━━━━━━━━━━━━━━━━━━━━╮ */
+  function handleLogout() {
+    toast.dismiss();
+    toast.loading("Loading...");
+    logout();
+  }
 
   return (
     <div className="sticky lg:static top-0 min-h-0 z-20 shadow-md shadow-secondary ">
@@ -142,8 +164,11 @@ export const Header = () => {
                   </div>
                 </div>
               </div>
-              <div className="w-fit flex">
+              <div className="w-fit flex items-center gap-5">
                 <RainbowKitCustomConnectButton />
+                <div onClick={handleLogout} className="text-white cursor-pointer">
+                  Logout
+                </div>
               </div>
             </div>
           </div>

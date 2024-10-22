@@ -1,6 +1,38 @@
-import React from "react";
+"use client";
+
+import React, { useContext } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import Loading from "~~/components/Loading";
+import GlobalContext from "~~/context/GlobalContext";
+import useBindAddress from "~~/hooks/server/useBindAddress";
+import { useGlobalState } from "~~/services/store/store";
 
 const BindWallet = () => {
+  const { userCredentials, currentUserDataRefetch } = useContext(GlobalContext);
+
+  const { address, isConnected } = useAccount();
+
+  const bindAddressSuccess = (data: string) => {
+    // refetch current user data
+    currentUserDataRefetch();
+    toast.success("Wallet bound successfully");
+  };
+
+  const bindAddressError = (error: any) => {
+    toast.error(error.response.data.message);
+  };
+
+  const { mutate: bindAddress, isPending: bindAddressLoading } = useBindAddress(bindAddressSuccess, bindAddressError);
+
+  const handleBindWallet = async () => {
+    if (!isConnected) {
+      toast.error("Please connect your wallet first");
+      return;
+    }
+    bindAddress(address!);
+  };
+
   return (
     <div className="flex justify-center">
       <div className="mt-10 w-[50%] mb-5">
@@ -20,13 +52,21 @@ const BindWallet = () => {
           disabled
           name="email"
           id="email"
-          placeholder="0x..."
+          placeholder={userCredentials.address != null ? userCredentials.address : "0x..."}
           className="w-full rounded-md border border-base-100 py-3 px-6 text-base font-medium text-[#6B7280] outline-none focus:shadow-md"
         />
         <div className="mt-5">
-          <button className="mb-10 hover:shadow-form w-full rounded-md bg-[#6A64F1] py-3 px-8 text-center text-base font-semibold text-white outline-none">
-            Bind Wallet
-          </button>
+          {bindAddressLoading ? (
+            <Loading />
+          ) : (
+            <button
+              onClick={handleBindWallet}
+              disabled={userCredentials.address != null}
+              className="disabled:opacity-50 mb-10 hover:shadow-form w-full rounded-md bg-[#6A64F1] py-3 px-8 text-center text-base font-semibold text-white outline-none"
+            >
+              Bind Wallet
+            </button>
+          )}
         </div>{" "}
       </div>
     </div>

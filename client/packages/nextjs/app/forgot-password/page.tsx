@@ -1,6 +1,52 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import useForgotPassword from "~~/hooks/server/useForgotPassword";
 
 const ForgotPassword = () => {
+  const router = useRouter();
+
+  const [email, setEmail] = useState("");
+
+  const {
+    mutate: forgotPassword,
+    isPending: forgoPasswordLoading,
+    isSuccess: forgotPasswordSuccess,
+  } = useForgotPassword(fogotSuccess, forgotFailed);
+
+  function fogotSuccess() {
+    toast.dismiss();
+    toast.success("Password reset email sent");
+  }
+
+  function forgotFailed(error: {
+    response: {
+      data: {
+        message: string;
+      };
+    };
+  }) {
+    toast.dismiss();
+    toast.error(error?.response?.data?.message);
+  }
+
+  function handleSend() {
+    if (email.trim() == "") {
+      toast.error("Please enter a valid email address");
+    } else {
+      toast.loading("Loading...");
+      forgotPassword({
+        email: email,
+      });
+    }
+  }
+
+  function handleRedirectToSignUp() {
+    router.push("/register");
+  }
+
   return (
     <div className="bg-gray-900 text-white flex min-h-screen flex-col items-center pt-16 sm:justify-center sm:-mt-20">
       <div className="relative mt-12 w-full max-w-lg sm:mt-10">
@@ -13,7 +59,7 @@ const ForgotPassword = () => {
             </p>
           </div>
           <div className="p-6 pt-0">
-            <form>
+            <div>
               <div>
                 <div>
                   <div className="group relative rounded-lg border focus-within:border-sky-200 px-3 pb-1.5 pt-2.5 duration-200 focus-within:ring focus-within:ring-sky-300/30">
@@ -24,6 +70,8 @@ const ForgotPassword = () => {
                       <div className="absolute right-3 translate-y-2 text-green-200"></div>
                     </div>
                     <input
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
                       type="email"
                       name="email"
                       placeholder="Your email"
@@ -36,13 +84,15 @@ const ForgotPassword = () => {
 
               <div className="mt-5 flex items-center justify-end gap-x-2">
                 <button
-                  className="font-semibold hover:bg-black hover:text-white hover:ring hover:ring-white transition duration-300 inline-flex items-center justify-center rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-white text-black h-10 px-4 py-2"
+                  onClick={handleSend}
+                  disabled={forgoPasswordLoading}
+                  className="disabled:opacity-50 font-semibold hover:bg-black hover:text-white hover:ring hover:ring-white transition duration-300 inline-flex items-center justify-center rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none bg-white text-black h-10 px-4 py-2"
                   type="submit"
                 >
                   Reset Password
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       </div>

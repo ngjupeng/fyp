@@ -269,6 +269,7 @@ export class AuthService {
   public async signup(data: UserSignUpDto): Promise<UserEntity> {
     // search for existing user
     let existingUser = await this.userService.getByEmail(data.email);
+    console.log(existingUser);
 
     if (existingUser) {
       // if status is active, then user already exists
