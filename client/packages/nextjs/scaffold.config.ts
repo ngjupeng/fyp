@@ -1,26 +1,25 @@
+import { defineChain } from "viem";
 import * as chains from "viem/chains";
-import { defineChain } from 'viem'
 
 export const fhenix = defineChain({
   id: 8008135,
-  name: 'fhenix',
+  name: "fhenix",
   nativeCurrency: {
     decimals: 18,
-    name: 'Ether',
-    symbol: 'ETH',
+    name: "Ether",
+    symbol: "tFHE",
   },
   rpcUrls: {
     default: {
-      http: ['https://api.helium.fhenix.zone'],
-      webSocket: ['	wss://api.helium.fhenix.zone:8548'],
+      http: ["https://api.helium.fhenix.zone"],
+      webSocket: ["wss://api.helium.fhenix.zone:8548"],
     },
   },
   blockExplorers: {
-    default: { name: 'Explorer', url: 'https://explorer.helium.fhenix.zone' },
+    default: { name: "Explorer", url: "https://explorer.helium.fhenix.zone" },
   },
   contracts: {},
 });
-
 
 export type ScaffoldConfig = {
   targetNetworks: readonly chains.Chain[];

@@ -41,31 +41,31 @@ export class ProjectBase {
   @ApiProperty()
   @IsNumber()
   @IsNotEmpty()
-  @Min(0)
+  // @Min(0)
   public minimumReputation: number;
 
   @ApiProperty()
   @IsNumber()
   @IsNotEmpty()
-  @Min(0)
+  // @Min(0)
   public collateralAmount: number;
 
   @ApiProperty()
   @IsNumber()
   @IsNotEmpty()
-  @Min(0)
+  // @Min(0)
   public totalRewardAmount: number;
 
   @ApiProperty()
   @IsNumber()
   @IsNotEmpty()
-  @Min(1)
+  // @Min(1)
   public maximumParticipantAllowed: number;
 
   @ApiProperty()
   @IsNumber()
   @IsNotEmpty()
-  @Min(1)
+  // @Min(1)
   public maximumRounds: number;
 
   @ApiProperty()

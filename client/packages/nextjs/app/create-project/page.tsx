@@ -1,13 +1,28 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import axios from "axios";
+import { ethers } from "ethers";
+import { JsonRpcProvider } from "ethers";
+import { BrowserProvider } from "ethers";
+import { EncryptionTypes, FhenixClient } from "fhenixjs";
 import { PinataSDK } from "pinata-web3";
 import toast from "react-hot-toast";
+import { parseEther, stringToBytes, toBytes } from "viem";
+import { useReadContract, useSimulateContract, useWriteContract } from "wagmi";
+import GlobalContext from "~~/context/GlobalContext";
+import deployedContracts from "~~/contracts/deployedContracts";
+import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
+import useCreateProject from "~~/hooks/server/useCreateProject";
 
 const CreateProject = () => {
-  const [isShowingNextPage, setIsShowingNextPage] = useState<boolean>(false);
+  const agreementAbi = deployedContracts[8008135].FederatedAgreement.abi;
+
+  const [isShowingNextPage, setIsShowingNextPage] = useState<boolean>(true);
+  const [agreementAddress, setAgreementAddress] = useState<`0x${string}`>("0x4eaaf1f4c85e275a7c88049c719194e97373b52d");
+
   const [phi, setPhi] = useState<string>("");
+  const { userCredentials } = useContext(GlobalContext);
   const [projectDetails, setProjectDetails] = useState<{
     name: string;
     description: string;
@@ -37,6 +52,105 @@ const CreateProject = () => {
     initialGlobalModel: "",
     fileStructure: {},
   });
+
+  // contract hooks
+  const { writeContractAsync: coreContractWrite } = useScaffoldWriteContract("FederatedCore");
+
+  const { writeContractAsync: agreementContractWrite } = useWriteContract();
+
+  const { mutate: createProject } = useCreateProject(
+    () => {
+      toast.success("Project updated with agreement address");
+    },
+    error => {
+      console.log(error);
+      if (typeof error.response.data.message == "string") {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Create project failed");
+      }
+    },
+  );
+
+  const result = useSimulateContract({
+    abi: agreementAbi,
+    address: agreementAddress,
+    functionName: "getPrivateKey",
+    args: [],
+    account: userCredentials.address,
+  });
+
+  console.log(result);
+
+  const handleCreateAgreement = async () => {
+    const { totalRewardAmount, collateralAmount, maximumParticipantsAllowed, minimumReputation, maximumRounds } =
+      projectDetails;
+    let owner = userCredentials.address;
+
+    if (owner == null) {
+      return toast.error("You have to bind your wallet first!");
+    }
+
+    try {
+      const agreement = await coreContractWrite({
+        functionName: "createAgreement",
+        args: [
+          owner,
+          BigInt(parseEther(totalRewardAmount.toString())),
+          BigInt(parseEther(collateralAmount.toString())),
+          BigInt(maximumParticipantsAllowed),
+          BigInt(minimumReputation),
+          BigInt(maximumRounds),
+        ],
+        value: parseEther(String(collateralAmount + totalRewardAmount)),
+      });
+
+      createProject({
+        ...projectDetails,
+        agreementAddress: agreement!,
+      });
+
+      setAgreementAddress(agreement!);
+    } catch (e) {
+      console.log(e);
+      console.error("Error create agreement:", e);
+    }
+  };
+
+  const handleSetPrivateKey = async () => {
+    // initialize your web3 provider
+    const provider = new JsonRpcProvider("https://api.helium.fhenix.zone");
+
+    // initialize Fhenix Client
+    const client = new FhenixClient({ provider });
+
+    const first30 = Number(phi.slice(0, 16));
+    console.log(first30);
+    const last30 = Number(phi.slice(-16));
+    const middlePart = phi.slice(16, -16);
+
+    try {
+      let encryptedFirst30 = await client.encrypt(first30, EncryptionTypes.uint128);
+      let encryptedLast30 = await client.encrypt(last30, EncryptionTypes.uint128);
+
+      // Convert Uint8Array to hex string
+      const first30Hex = "0x" + Buffer.from(encryptedFirst30.data).toString("hex");
+      const last30Hex = "0x" + Buffer.from(encryptedLast30.data).toString("hex");
+
+      const result = await agreementContractWrite({
+        abi: agreementAbi,
+        address: agreementAddress,
+        functionName: "setPrivateKey",
+        args: [{ data: first30Hex }, { data: last30Hex }, middlePart],
+      });
+
+      console.log("Write contract result:", result);
+      toast.success("Private key set successfully");
+    } catch (error) {
+      console.error("Error setting private key:", error);
+      toast.error("Failed to set private key");
+    }
+  };
 
   const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setProjectDetails({ ...projectDetails, [e.target.name]: e.target.value });
@@ -180,14 +294,13 @@ const CreateProject = () => {
   const handleCreateProject = async () => {
     // Check if all required fields in projectDetails are filled
     const requiredFields = Object.entries(projectDetails).filter(([key]) => key !== "agreementAddress");
-    const missingFields = requiredFields.filter(([_, value]) => value === "" || value === 0);
+    const missingFields = requiredFields.filter(([_, value]) => value === "");
 
     if (missingFields.length === 0) {
-      // go next page
+      // first create project record in db
+      console.log(projectDetails);
+
       setIsShowingNextPage(true);
-      // 1. approve
-      // 2. call core contract create agreement
-      // 3. store agreement address in projectDetails
     } else {
       const missingFieldNames = missingFields.map(([key]) => key).join(", ");
       toast.error(`Please fill all required fields: ${missingFieldNames}`);
@@ -200,9 +313,37 @@ const CreateProject = () => {
         {/* <!-- Author: FormBold Team --> */}
         <div className="mx-auto w-full max-w-[60%] py-1">
           {isShowingNextPage ? (
-            <div>
-              <h1>1. Approve</h1>
-              <button>Approve</button>
+            <div className="mt-10">
+              <h2 className="text-3xl text-white font-bold mb-5">Setup your project</h2>
+              <div>
+                <div className="mb-5">
+                  <label htmlFor="email" className="mb-3 block text-base font-medium text-white">
+                    1. Create agreement with collateral and reward:
+                  </label>
+                </div>
+                <button
+                  onClick={handleCreateAgreement}
+                  className="disabled:opacity-50 font-semibold hover:bg-black hover:text-white hover:ring hover:ring-white transition duration-300 inline-flex items-center justify-center rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none bg-white text-black h-10 px-4 py-2"
+                >
+                  Create
+                </button>
+              </div>
+
+              <div className="mt-5">
+                <div className="mb-5">
+                  <label htmlFor="email" className="mb-3 block text-base font-medium text-white">
+                    2. Set private key in agreement address:
+                  </label>
+                </div>
+                <button
+                  onClick={handleSetPrivateKey}
+                  className="disabled:opacity-50 font-semibold hover:bg-black hover:text-white hover:ring hover:ring-white transition duration-300 inline-flex items-center justify-center rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none bg-white text-black h-10 px-4 py-2"
+                >
+                  Set
+                </button>
+              </div>
+
+              <div className="mt-5">Your project has been set up successfully!</div>
             </div>
           ) : (
             <div className="py-4 px-9">
@@ -245,7 +386,7 @@ const CreateProject = () => {
                   type="text"
                   name="verificationDatasetURL"
                   id="verificationDatasetURL"
-                  placeholder="Project Name"
+                  placeholder="Verification Dataset URL"
                   className="w-full rounded-md border border-base-100 py-3 px-6 text-base font-medium text-[#6B7280] outline-none focus:shadow-md"
                 />
                 <p className="my-0 mt-1 text-xs text-gray-500">
@@ -281,21 +422,6 @@ const CreateProject = () => {
                       type="number"
                       name="maximumParticipantsAllowed"
                       id="maximumParticipantsAllowed"
-                      className="w-full rounded-md border border-base-100 py-3 px-6 text-base font-medium text-[#6B7280] outline-none focus:shadow-md"
-                    />
-                  </div>
-                </div>
-                <div className="w-full px-3 sm:w-1/2">
-                  <div className="mb-5">
-                    <label htmlFor="email" className="mb-3 block text-base font-medium text-white">
-                      Maximum Participants Allowed
-                    </label>
-                    <input
-                      onChange={handleOnChange}
-                      value={projectDetails.maximumRounds}
-                      type="number"
-                      name="maximumRounds"
-                      id="maximumRounds"
                       className="w-full rounded-md border border-base-100 py-3 px-6 text-base font-medium text-[#6B7280] outline-none focus:shadow-md"
                     />
                   </div>
@@ -384,6 +510,9 @@ const CreateProject = () => {
                         <div>
                           <p className="text-sm text-gray-300">Private Key (phi):</p>
                           <p className="text-xs text-gray-400 break-all">{phi}</p>
+                          <p className="text-xs text-gray-400">
+                            Please do a backup of this private key, our platform will not store it or remain any record
+                          </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-300">IPFS Hash:</p>

@@ -22,9 +22,9 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
   address public immutable CORE_ADDRESS;
   uint256 public immutable MAXIMUM_ROUNDS;
   uint256 public immutable REWARD_EACH_ROUND;
-  euint128 private encHighPrivateKey;
-  euint128 private encLowPrivateKey;
-  bytes private remainderPrivateKey;
+  inEuint128 public encHighPrivateKey;
+  inEuint128 public encLowPrivateKey;
+  string private remainderPrivateKey;
 
   address public owner;
   address[] public participants;
@@ -84,7 +84,7 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
     uint256 _reputationThreshold,
     address _coreAddress,
     uint256 _maximumRounds
-  ) {
+  ) payable {
     owner = _owner;
     status = FederatedAgreementStatus.PENDING;
     TOTAL_REWARDS = _totalRewards;
@@ -94,9 +94,9 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
     CORE_ADDRESS = _coreAddress;
     MAXIMUM_ROUNDS = _maximumRounds;
     // update collateral and rewards
-    collaterals[msg.sender] = COLLATERAL_AMOUNT;
-    isParticipant[msg.sender] = true;
-    participants.push(msg.sender);
+    collaterals[_owner] = COLLATERAL_AMOUNT;
+    isParticipant[_owner] = true;
+    participants.push(_owner);
 
     // dynamically calculate rewards for each round
     REWARD_EACH_ROUND = TOTAL_REWARDS / MAXIMUM_ROUNDS;
@@ -119,24 +119,15 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
   // ************************************
   // ************ PUBLICs ***************
   // ************************************
-  function setPrivateKey(bytes calldata privateKey) public onlyOwner initializer {
-    // check if private key is valid
-    if (privateKey.length != 256) {
-      revert InvalidPrivateKey();
-    }
-
-    // extract first 16 bytes of private key
-    bytes16 highPrivateKey = bytes16(privateKey[:16]);
-
-    // extract last 16 bytes of private key
-    bytes16 lowPrivateKey = bytes16(privateKey[privateKey.length - 16:]);
-
-    // extract remainder of private key
-    remainderPrivateKey = privateKey[16:privateKey.length - 16];
-
-    // encrypt high private key
-    encHighPrivateKey = FHE.asEuint128(uint128(highPrivateKey));
-    encLowPrivateKey = FHE.asEuint128(uint128(lowPrivateKey));
+  function setPrivateKey(
+    inEuint128 calldata first30,
+    inEuint128 calldata last30,
+    string calldata middlePart
+  ) public onlyOwner initializer {
+    // // encrypt high private key
+    encHighPrivateKey = first30;
+    encLowPrivateKey = last30;
+    remainderPrivateKey = middlePart;
   }
 
   function startAgreement() public onlyOwner {
@@ -287,7 +278,7 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
     }
   }
 
-  function addParticipant(address participant) public onlyPending {
+  function addParticipant(address participant) public payable onlyPending {
     if (participants.length >= MAXIMUM_PARTICIPANTS) {
       revert MaximumParticipantsReached();
     }
@@ -333,16 +324,17 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
     emit RewardsRedeemed(msg.sender, round, amount);
   }
 
-  function getPrivateKey() public view returns (string memory) {
+  function getPrivateKey() public returns (uint128, uint128, string memory) {
     // check is participant
     _requiredParticipant(msg.sender);
-    // decrypt high private key
-    bytes16 highPrivateKey = bytes16(FHE.decrypt(encHighPrivateKey));
-
-    // decrypt low private key
-    bytes16 lowPrivateKey = bytes16(FHE.decrypt(encLowPrivateKey));
-
-    return string(abi.encodePacked(highPrivateKey, remainderPrivateKey, lowPrivateKey));
+    // uint128 highPrivateKey = FHE.decrypt(FHE.asEuint128(encHighPrivateKey));
+    // uint128 lowPrivateKey = FHE.decrypt(FHE.asEuint128(encLowPrivateKey));
+    // return (highPrivateKey, lowPrivateKey, remainderPrivateKey);
+    return (
+      FHE.decrypt(FHE.asEuint128(encHighPrivateKey)),
+      FHE.decrypt(FHE.asEuint128(encLowPrivateKey)),
+      remainderPrivateKey
+    );
   }
 
   function getProposals() public view returns (Proposal[] memory) {

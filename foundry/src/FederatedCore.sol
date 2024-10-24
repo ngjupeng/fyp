@@ -40,12 +40,12 @@ contract FederatedCore is IFederatedCore, Ownable {
     uint256 _maximumParticipants,
     uint256 _reputationThreshold,
     uint256 _maximumRounds
-  ) public returns (address) {
+  ) public payable returns (address) {
     if (msg.value < _collateralAmount + _totalRewards) {
       revert InsufficientFunds();
     }
 
-    FederatedAgreement agreement = new FederatedAgreement(
+    FederatedAgreement agreement = new FederatedAgreement{ value: _collateralAmount + _totalRewards }(
       _owner,
       _totalRewards,
       _collateralAmount,
@@ -54,8 +54,6 @@ contract FederatedCore is IFederatedCore, Ownable {
       address(this),
       _maximumRounds
     );
-
-    payable(address(agreement)).transfer(_collateralAmount + _totalRewards);
 
     agreementCount++;
     idToAgreement[agreementCount] = address(agreement);
