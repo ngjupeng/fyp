@@ -3,7 +3,6 @@ import {
   IsArray,
   IsEnum,
   IsNotEmpty,
-  IsNumber,
   IsObject,
   IsString,
   Min,
@@ -39,31 +38,26 @@ export class ProjectBase {
   public g: string;
 
   @ApiProperty()
-  @IsNumber()
   @IsNotEmpty()
   // @Min(0)
   public minimumReputation: number;
 
   @ApiProperty()
-  @IsNumber()
   @IsNotEmpty()
   // @Min(0)
   public collateralAmount: number;
 
   @ApiProperty()
-  @IsNumber()
   @IsNotEmpty()
   // @Min(0)
   public totalRewardAmount: number;
 
   @ApiProperty()
-  @IsNumber()
   @IsNotEmpty()
   // @Min(1)
   public maximumParticipantAllowed: number;
 
   @ApiProperty()
-  @IsNumber()
   @IsNotEmpty()
   // @Min(1)
   public maximumRounds: number;
@@ -95,7 +89,6 @@ export class ProjectDto extends ProjectBase {
   public creator: UserEntity;
 
   @ApiProperty()
-  @IsNumber()
   @IsNotEmpty()
   public currentRound: number;
 

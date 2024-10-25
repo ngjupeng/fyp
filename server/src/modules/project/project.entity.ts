@@ -35,10 +35,10 @@ export class ProjectEntity extends BaseEntity {
   @Column({ type: 'int' })
   public minimumReputation: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'float' })
   public collateralAmount: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'float' })
   public totalRewardAmount: number;
 
   @Column({ type: 'int' })

@@ -84,4 +84,5 @@ interface IFederatedAgreementTypes {
   error ProposalVotingTimeNotPassed();
   error InvalidAgreementStatus();
   error InsufficientFunds();
+  error ProposalCreatorCannotVote();
 }

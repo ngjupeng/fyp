@@ -75,7 +75,7 @@ cp .env.example .env.test
 
 ```bash
 # development, make sure you have a local database running
-npm run start:dev
+
 
 # production mode
 npm run start:prod

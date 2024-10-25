@@ -1,8 +1,34 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Button, Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
+import toast from "react-hot-toast";
+import { useAccount, useWriteContract } from "wagmi";
+import GlobalContext from "~~/context/GlobalContext";
+import deployedContracts from "~~/contracts/deployedContracts";
+import { User } from "~~/types/User";
 
-export default function CreateProposal() {
-  let [isOpen, setIsOpen] = useState(true);
+interface CreateProposalProps {
+  participants: User[];
+  agreementAddress: string;
+  refetchProposals: any;
+  projectStatus: string;
+}
+
+export default function CreateProposal({
+  participants,
+  agreementAddress,
+  refetchProposals,
+  projectStatus,
+}: CreateProposalProps) {
+  const agreementAbi = deployedContracts[8008135].FederatedAgreement.abi;
+
+  let [isOpen, setIsOpen] = useState(false);
+  let [suspiciousAddress, setSuspiciousAddress] = useState("");
+  let [justification, setJustification] = useState("");
+  const { userCredentials } = useContext(GlobalContext);
+
+  const { address } = useAccount();
+
+  const { writeContractAsync: agreementContractWrite } = useWriteContract();
 
   function open() {
     setIsOpen(true);
@@ -12,14 +38,59 @@ export default function CreateProposal() {
     setIsOpen(false);
   }
 
+  const handleOnChangeSuspiciousAddress = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSuspiciousAddress(e.target.value);
+  };
+
+  const handleOnChangeJustification = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setJustification(e.target.value);
+  };
+
+  const handleCreate = async () => {
+    if (userCredentials.address !== address) {
+      toast.error("You are not using same wallet as the one binded to this account");
+      return;
+    }
+
+    // if justification is empty, show error
+    if (justification.trim() === "") {
+      toast.error("Justification is required");
+      return;
+    }
+
+    // if select himself, show error
+    if (suspiciousAddress === address) {
+      toast.error("You cannot select yourself");
+      return;
+    }
+
+    try {
+      const result = await agreementContractWrite({
+        abi: agreementAbi,
+        address: agreementAddress,
+        functionName: "createProposal",
+        args: [suspiciousAddress, justification],
+      });
+      toast.success("Proposal created successfully");
+      await refetchProposals();
+      close();
+      setJustification("");
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to create proposal");
+    }
+  };
+
   return (
     <>
-      <Button
-        onClick={open}
-        className="rounded-md bg-black/20 py-2 px-4 text-sm font-medium text-white focus:outline-none data-[hover]:bg-black/30 data-[focus]:outline-1 data-[focus]:outline-white"
-      >
-        Create New Proposal +
-      </Button>
+      {projectStatus.toLowerCase() === "running" && (
+        <Button
+          onClick={open}
+          className="rounded-md bg-black/20 py-2 px-4 text-sm font-medium text-white focus:outline-none data-[hover]:bg-black/30 data-[focus]:outline-1 data-[focus]:outline-white"
+        >
+          Create New Proposal +
+        </Button>
+      )}
 
       <Dialog open={isOpen} as="div" className="relative z-10 focus:outline-none" onClose={close}>
         <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
@@ -40,11 +111,13 @@ export default function CreateProposal() {
                     id="gender"
                     name="gender"
                     className="w-full rounded-md border border-base-100 py-3 px-6 text-base font-medium text-[#6B7280] outline-none focus:shadow-md"
+                    value={suspiciousAddress}
                     required
+                    onChange={handleOnChangeSuspiciousAddress}
                   >
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
+                    {participants.map(participant => (
+                      <option value={participant.address}>{participant.address}</option>
+                    ))}
                   </select>
                 </div>
 
@@ -57,13 +130,15 @@ export default function CreateProposal() {
                     id="email"
                     placeholder="What is this project about?"
                     className="w-full rounded-md border border-base-100 py-3 px-6 text-base font-medium text-[#6B7280] outline-none focus:shadow-md"
+                    value={justification}
+                    onChange={handleOnChangeJustification}
                   />
                 </div>
               </p>
               <div className="mt-4 flex justify-end">
                 <Button
                   className="inline-flex items-center gap-2 rounded-md bg-gray-700 py-1.5 px-3 text-sm/6 font-semibold text-white shadow-inner shadow-white/10 focus:outline-none data-[hover]:bg-gray-600 data-[focus]:outline-1 data-[focus]:outline-white data-[open]:bg-gray-700"
-                  onClick={close}
+                  onClick={handleCreate}
                 >
                   Create
                 </Button>

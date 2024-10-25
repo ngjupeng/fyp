@@ -216,6 +216,11 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
   function voteProposal(uint256 index, bool isVoteYes) public onlyRunning {
     Proposal memory proposal = proposals[round][index];
 
+    // creator cannot vote
+    if (proposal.proposer == msg.sender) {
+      revert ProposalCreatorCannotVote();
+    }
+
     // check if already voted
     if (hasVoted[msg.sender][proposal.proposalId]) {
       revert AlreadyVoted();
@@ -313,7 +318,7 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
   }
 
   function redeemRewards() public {
-    uint256 amount = _calculateRewards(msg.sender);
+    uint256 amount = calculateRewards(msg.sender);
     if (amount <= 0) {
       revert NoRewardsAvailable();
     }
@@ -342,7 +347,7 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
   }
 
   function getRewards(address participant) public view returns (uint256) {
-    return _calculateRewards(participant);
+    return calculateRewards(participant);
   }
 
   // ************************************
@@ -410,7 +415,7 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
     }
   }
 
-  function _calculateRewards(address participant) private view returns (uint256) {
+  function calculateRewards(address participant) public view returns (uint256) {
     uint256 lastClaimed = lastClaimedRound[participant];
     if (lastClaimed >= round) {
       return 0;

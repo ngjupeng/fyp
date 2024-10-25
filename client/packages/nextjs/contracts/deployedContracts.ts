@@ -7,7 +7,7 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   8008135: {
     FederatedCore: {
-      address: "0xF53f86659E0A56281d4620E27262a988d0417CE7",
+      address: "0x4Eb9Ec1366De3256f035E24b268249c29dA7e08e",
       abi: [
         {
           type: "constructor",
@@ -224,6 +224,13 @@ const deployedContracts = {
           inputs: [{ name: "participant", type: "address", internalType: "address" }],
           outputs: [],
           stateMutability: "payable",
+        },
+        {
+          type: "function",
+          name: "calculateRewards",
+          inputs: [{ name: "participant", type: "address", internalType: "address" }],
+          outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
+          stateMutability: "view",
         },
         {
           type: "function",
@@ -612,6 +619,7 @@ const deployedContracts = {
         { type: "error", name: "NotParticipant", inputs: [] },
         { type: "error", name: "NotPending", inputs: [] },
         { type: "error", name: "NotRunning", inputs: [] },
+        { type: "error", name: "ProposalCreatorCannotVote", inputs: [] },
         { type: "error", name: "ProposalNotVoting", inputs: [] },
         { type: "error", name: "ProposalRoundNotMatch", inputs: [] },
         { type: "error", name: "ProposalStillVoting", inputs: [] },

@@ -2,24 +2,28 @@
 
 import React, { useContext, useState } from "react";
 import axios from "axios";
-import { ethers } from "ethers";
 import { JsonRpcProvider } from "ethers";
-import { BrowserProvider } from "ethers";
 import { EncryptionTypes, FhenixClient } from "fhenixjs";
 import { PinataSDK } from "pinata-web3";
 import toast from "react-hot-toast";
-import { parseEther, stringToBytes, toBytes } from "viem";
-import { useReadContract, useSimulateContract, useWriteContract } from "wagmi";
+import { parseEther } from "viem";
+import { useSimulateContract, useWriteContract } from "wagmi";
 import GlobalContext from "~~/context/GlobalContext";
 import deployedContracts from "~~/contracts/deployedContracts";
 import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 import useCreateProject from "~~/hooks/server/useCreateProject";
+import { publicClient } from "~~/services/web3/fhenixClient";
 
 const CreateProject = () => {
   const agreementAbi = deployedContracts[8008135].FederatedAgreement.abi;
+  const coreAddress = deployedContracts[8008135].FederatedCore.address;
+  const coreAbi = deployedContracts[8008135].FederatedCore.abi;
 
-  const [isShowingNextPage, setIsShowingNextPage] = useState<boolean>(true);
-  const [agreementAddress, setAgreementAddress] = useState<`0x${string}`>("0x4eaaf1f4c85e275a7c88049c719194e97373b52d");
+  let isAgreementCreated = false;
+
+  const [isUploadingFile, setIsUploadingFile] = useState<boolean>(false);
+  const [isShowingNextPage, setIsShowingNextPage] = useState<boolean>(false);
+  const [agreementAddress, setAgreementAddress] = useState<`0x${string}`>("0x0");
 
   const [phi, setPhi] = useState<string>("");
   const { userCredentials } = useContext(GlobalContext);
@@ -32,7 +36,7 @@ const CreateProject = () => {
     minimumReputation: number;
     collateralAmount: number;
     totalRewardAmount: number;
-    maximumParticipantsAllowed: number;
+    maximumParticipantAllowed: number;
     maximumRounds: number;
     agreementAddress: string;
     initialGlobalModel: string;
@@ -46,7 +50,7 @@ const CreateProject = () => {
     minimumReputation: 0,
     collateralAmount: 0,
     totalRewardAmount: 0,
-    maximumParticipantsAllowed: 0,
+    maximumParticipantAllowed: 0,
     maximumRounds: 0,
     agreementAddress: "",
     initialGlobalModel: "",
@@ -80,10 +84,29 @@ const CreateProject = () => {
     account: userCredentials.address,
   });
 
-  console.log(result);
+  const unwatch = publicClient.watchContractEvent({
+    address: coreAddress,
+    abi: coreAbi,
+    eventName: "AgreementCreated",
+    args: {
+      owner: userCredentials.address,
+    },
+    onLogs(logs: any) {
+      const log = logs[0];
+      if (!isAgreementCreated) {
+        const agreementAddress = log?.args?.agreement;
+        setAgreementAddress(agreementAddress);
+        createProject({
+          ...projectDetails,
+          agreementAddress: agreementAddress,
+        });
+        isAgreementCreated = true;
+      }
+    },
+  });
 
   const handleCreateAgreement = async () => {
-    const { totalRewardAmount, collateralAmount, maximumParticipantsAllowed, minimumReputation, maximumRounds } =
+    const { totalRewardAmount, collateralAmount, maximumParticipantAllowed, minimumReputation, maximumRounds } =
       projectDetails;
     let owner = userCredentials.address;
 
@@ -92,25 +115,20 @@ const CreateProject = () => {
     }
 
     try {
-      const agreement = await coreContractWrite({
+      console.log(projectDetails);
+      const value = Number(projectDetails.collateralAmount) + Number(projectDetails.totalRewardAmount);
+      await coreContractWrite({
         functionName: "createAgreement",
         args: [
           owner,
           BigInt(parseEther(totalRewardAmount.toString())),
           BigInt(parseEther(collateralAmount.toString())),
-          BigInt(maximumParticipantsAllowed),
+          BigInt(maximumParticipantAllowed),
           BigInt(minimumReputation),
           BigInt(maximumRounds),
         ],
-        value: parseEther(String(collateralAmount + totalRewardAmount)),
+        value: parseEther(String(value)),
       });
-
-      createProject({
-        ...projectDetails,
-        agreementAddress: agreement!,
-      });
-
-      setAgreementAddress(agreement!);
     } catch (e) {
       console.log(e);
       console.error("Error create agreement:", e);
@@ -123,13 +141,14 @@ const CreateProject = () => {
 
     // initialize Fhenix Client
     const client = new FhenixClient({ provider });
-
+    console.log(phi);
     const first30 = Number(phi.slice(0, 16));
     console.log(first30);
     const last30 = Number(phi.slice(-16));
     const middlePart = phi.slice(16, -16);
 
     try {
+      console.log(agreementAddress);
       let encryptedFirst30 = await client.encrypt(first30, EncryptionTypes.uint128);
       let encryptedLast30 = await client.encrypt(last30, EncryptionTypes.uint128);
 
@@ -225,6 +244,8 @@ const CreateProject = () => {
       const reader = new FileReader();
       reader.onload = async event => {
         try {
+          setIsUploadingFile(true);
+          toast.loading("Uploading file...");
           const json = JSON.parse(event.target?.result as string);
           if (json.model_name && json.parameters) {
             const { model_name, parameters } = json;
@@ -242,7 +263,9 @@ const CreateProject = () => {
               g: g,
               fileStructure: structure,
             });
+            toast.dismiss();
             toast.success("Model uploaded successfully");
+            setIsUploadingFile(false);
           } else {
             toast.error("Invalid JSON structure. Must contain 'model_name' and 'parameters'.");
           }
@@ -418,10 +441,10 @@ const CreateProject = () => {
                     </label>
                     <input
                       onChange={handleOnChange}
-                      value={projectDetails.maximumParticipantsAllowed}
+                      value={projectDetails.maximumParticipantAllowed}
                       type="number"
-                      name="maximumParticipantsAllowed"
-                      id="maximumParticipantsAllowed"
+                      name="maximumParticipantAllowed"
+                      id="maximumParticipantAllowed"
                       className="w-full rounded-md border border-base-100 py-3 px-6 text-base font-medium text-[#6B7280] outline-none focus:shadow-md"
                     />
                   </div>

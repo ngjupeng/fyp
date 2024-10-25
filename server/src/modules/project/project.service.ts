@@ -60,7 +60,7 @@ export class ProjectService {
   public async getAllProjects(): Promise<ProjectResponseDto[]> {
     const projects = await this.projectRepository.find(
       {},
-      { relations: ['participants'] },
+      { relations: ['participants', 'creator'] },
     );
 
     return projects.map(
@@ -175,6 +175,7 @@ export class ProjectService {
       abi: abis.federatedCore.abi.abi,
       eventName: 'AgreementFinished',
       onLogs: (logs) => {
+        console.log('logs', logs);
         const event = logs[0] as any;
         const agreementAddress = event?.args?.agreement;
         this.endProject(agreementAddress);
@@ -199,7 +200,7 @@ export class ProjectService {
   public async getProjectDetails(projectId: number): Promise<ProjectEntity> {
     const project = await this.projectRepository.findOne(
       { id: projectId },
-      { relations: ['rounds'] },
+      { relations: ['rounds', 'creator', 'participants'] },
     );
     return project;
   }
@@ -229,7 +230,7 @@ export class ProjectService {
       {
         participants: { id: user.id },
       },
-      { relations: ['participants'] },
+      { relations: ['participants', 'creator'] },
     );
 
     return projects.map(

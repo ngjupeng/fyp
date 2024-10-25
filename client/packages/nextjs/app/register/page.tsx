@@ -66,6 +66,12 @@ const Register = () => {
       } else {
         toast.loading("Loading...");
         register(registerDetail);
+        setRegisterDetail({
+          email: "",
+          name: "",
+          password: "",
+          confirm: "",
+        });
       }
     }
   }

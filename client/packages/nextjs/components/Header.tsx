@@ -3,7 +3,7 @@
 import React, { useCallback, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Router from "next/router";
 import toast from "react-hot-toast";
 import { Bars3Icon, BugAntIcon } from "@heroicons/react/24/outline";
@@ -59,6 +59,7 @@ export const HeaderMenuLinks = () => {
  * Site header
  */
 export const Header = () => {
+  const router = useRouter();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const burgerMenuRef = useRef<HTMLDivElement>(null);
   useOutsideClick(
@@ -74,6 +75,7 @@ export const Header = () => {
     { label: "My Projects", href: "/projects" },
     { label: "Bind Wallet", href: "/bind-wallet" },
     { label: "Create Project", href: "/create-project" },
+    { label: "Decrypt", href: "/decrypt" },
   ];
 
   function handleLogoutSuccess() {
@@ -84,7 +86,6 @@ export const Header = () => {
   /* ╭━━━━━━━━━━━━━━━━━━━━━ server hooks failed handlers ━━━━━━━━━━━━━━━━━━━━━━╮ */
   function handleLogoutFaield() {
     toast.dismiss();
-    toast.error("Sign out failed");
   }
 
   /* ╭━━━━━━━━━━━━━━━━━━━━━ local function handlers ━━━━━━━━━━━━━━━━━━━━━━╮ */
@@ -166,7 +167,12 @@ export const Header = () => {
               </div>
               <div className="w-fit flex items-center gap-5">
                 <RainbowKitCustomConnectButton />
-                <div onClick={handleLogout} className="text-white cursor-pointer">
+                <div
+                  onClick={() => {
+                    router.replace("/login");
+                  }}
+                  className="text-white cursor-pointer"
+                >
                   Logout
                 </div>
               </div>

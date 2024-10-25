@@ -25,6 +25,10 @@ const Login = () => {
       accessToken: string;
       isTwoFactorAuthEnabled: boolean;
     } = JSON.parse(data);
+    setLoginCredentials({
+      email: "",
+      password: "",
+    });
     localStorage.setItem("accessToken", loginRes.accessToken);
 
     router.push("/home");

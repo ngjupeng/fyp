@@ -5,6 +5,7 @@ export type User = {
   profilePicturePath: string;
   isVerified: boolean;
   role: string;
+  address: string;
 };
 
 export type CurrentUser = {

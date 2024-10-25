@@ -153,9 +153,9 @@ export class RoundService {
       });
       project.currentRound = currentRound;
       await this.projectRepository.updateOne({ id: project.id }, project);
-    } catch (BadRequestException) {
-      console.log(BadRequestException);
-      throw new BadRequestException(BadRequestException);
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException(error);
     }
   }
 

@@ -1,7 +1,7 @@
 export const abis = {
   federatedCore: {
-    name: 'FederatedCore',
-    address: '0x543C6C5ACdbafE13AED58C673393A4477b764fc2',
+    name: '0x4Eb9Ec1366De3256f035E24b268249c29dA7e08e',
+    address: '0x4Eb9Ec1366De3256f035E24b268249c29dA7e08e',
     abi: {
       abi: [
         {
@@ -20,19 +20,9 @@ export const abis = {
         },
         {
           type: 'function',
-          name: 'addSupportedToken',
-          inputs: [
-            { name: 'tokenAddress', type: 'address', internalType: 'address' },
-          ],
-          outputs: [],
-          stateMutability: 'nonpayable',
-        },
-        {
-          type: 'function',
           name: 'createAgreement',
           inputs: [
             { name: '_owner', type: 'address', internalType: 'address' },
-            { name: '_tokenAddress', type: 'address', internalType: 'address' },
             { name: '_totalRewards', type: 'uint256', internalType: 'uint256' },
             {
               name: '_collateralAmount',
@@ -56,7 +46,7 @@ export const abis = {
             },
           ],
           outputs: [{ name: '', type: 'address', internalType: 'address' }],
-          stateMutability: 'nonpayable',
+          stateMutability: 'payable',
         },
         {
           type: 'function',
@@ -94,15 +84,6 @@ export const abis = {
         },
         {
           type: 'function',
-          name: 'removeSupportedToken',
-          inputs: [
-            { name: 'tokenAddress', type: 'address', internalType: 'address' },
-          ],
-          outputs: [],
-          stateMutability: 'nonpayable',
-        },
-        {
-          type: 'function',
           name: 'renounceOwnership',
           inputs: [],
           outputs: [],
@@ -136,12 +117,6 @@ export const abis = {
             },
             {
               name: 'owner',
-              type: 'address',
-              indexed: true,
-              internalType: 'address',
-            },
-            {
-              name: 'tokenAddress',
               type: 'address',
               indexed: true,
               internalType: 'address',
@@ -256,6 +231,7 @@ export const abis = {
           ],
           anonymous: false,
         },
+        { type: 'error', name: 'InsufficientFunds', inputs: [] },
         { type: 'error', name: 'NotAgreement', inputs: [] },
         {
           type: 'error',
