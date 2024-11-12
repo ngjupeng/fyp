@@ -55,7 +55,7 @@ export default function AddSubmission({
     setIsOpen(false);
   }
 
-  const encryptArray = async (array: number[], g: string, n: string) => {
+  const encryptArray = async (array: string[], g: string, n: string) => {
     try {
       const response = await axios.post("/api/encrypt", {
         array: array.join("|"),
@@ -117,8 +117,26 @@ export default function AddSubmission({
               toast.error("Structure of the uploaded file is not the same as the project structure");
               return;
             }
+            const multipliedArray = flattenedArray.map(num => {
+              const multiplied = num * 100000;
 
-            const encryptedArray = await encryptArray(flattenedArray, g, n);
+              return parseInt(multiplied.toFixed(0)).toString();
+            });
+
+            const encryptedArray = await encryptArray(multipliedArray, g, n);
+
+            // const response = await fetch("/api/decrypt", {
+            //   method: "POST",
+            //   body: JSON.stringify({
+            //     encryptedArray,
+            //     phi: "39447589266885628430822614441030007857765438352372081135685522527121299205614527047368425139318170632365470718880490614013766119047902098128839510504637631964296646619546843032839315964780912943562332108526258541196906036359223796496353142521753023741259133703072707878812731097492381419235856276035360738552",
+            //     n: "39447589266885628430822614441030007857765438352372081135685522527121299205614527047368425139318170632365470718880490614013766119047902098128839510504637644981378859565521418562435408979126887934419084674645291401476949823847892578389946773610522166650652851867899175376654935595836454386226158406541284616111",
+            //   }),
+            // });
+            // const data = await response.json();
+            // const array = data?.decryptedArray?.split("|");
+            // console.log(array);
+
             const ipfsHash = await uploadToIPFS(model_name, encryptedArray);
             setIpfsHash(ipfsHash);
 

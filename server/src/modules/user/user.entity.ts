@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, OneToMany, OneToOne } from 'typeorm';
 import { Exclude } from 'class-transformer';
 
 import { BaseEntity } from '../../database/base.entity';
@@ -6,6 +6,7 @@ import { IUser } from '../../common/interfaces';
 import { UserStatus } from '../../common/enums/user';
 import { Role } from '../../common/enums/role';
 import { ReferralCodeEntity } from '../referral/referral.entity';
+import { VerificationEntity } from './verification.entity';
 
 @Entity({ name: 'users' })
 export class UserEntity extends BaseEntity implements IUser {
@@ -34,6 +35,12 @@ export class UserEntity extends BaseEntity implements IUser {
   @Column({ type: 'varchar', unique: true })
   public address: string;
 
+  @Column({ type: 'varchar', nullable: true, unique: true })
+  public googleEmail: string | null;
+
+  @Column({ type: 'varchar', nullable: true, unique: true })
+  public kaggleUsername: string | null;
+
   @Exclude()
   @Column({
     type: 'enum',
@@ -48,4 +55,7 @@ export class UserEntity extends BaseEntity implements IUser {
   @OneToOne(() => UserEntity, { nullable: true })
   @JoinColumn()
   public referredBy: UserEntity | null;
+
+  @OneToMany(() => VerificationEntity, (verification) => verification.user)
+  public verifications: VerificationEntity[];
 }

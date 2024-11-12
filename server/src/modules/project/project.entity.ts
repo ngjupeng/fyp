@@ -44,6 +44,12 @@ export class ProjectEntity extends BaseEntity {
   @Column({ type: 'int' })
   public maximumParticipantAllowed: number;
 
+  @Column({ type: 'boolean' })
+  public isWhitelist: boolean;
+
+  @Column({ type: 'text', array: true })
+  public whitelistedAddress: string[];
+
   @Column({ type: 'int' })
   public maximumRounds: number;
 

@@ -8,10 +8,14 @@ import { UserRepository } from './user.repository';
 import { ReferralModule } from '../referral/referral.module';
 import { ReferralCodeService } from '../referral/referral.service';
 import { AppConfigService } from '../../common/config/services/config.service';
+import { ProviderEntity } from './provider.entity';
+import { VerificationEntity } from './verification.entity';
+import { ProviderRepository } from './provider.repository';
+import { VerificationRepository } from './verification.repository';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserEntity]),
+    TypeOrmModule.forFeature([UserEntity, ProviderEntity, VerificationEntity]),
     ConfigModule,
     ReferralModule,
   ],
@@ -22,6 +26,8 @@ import { AppConfigService } from '../../common/config/services/config.service';
     UserRepository,
     ReferralCodeService,
     AppConfigService,
+    ProviderRepository,
+    VerificationRepository,
   ],
   exports: [UserService],
 })

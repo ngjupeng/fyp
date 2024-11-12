@@ -7,7 +7,7 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   8008135: {
     FederatedCore: {
-      address: "0x4Eb9Ec1366De3256f035E24b268249c29dA7e08e",
+      address: "0xcb6cDd4bb2F7b69992Fa901E3C20F23B2Ce9829a",
       abi: [
         {
           type: "constructor",
@@ -31,6 +31,8 @@ const deployedContracts = {
             { name: "_maximumParticipants", type: "uint256", internalType: "uint256" },
             { name: "_reputationThreshold", type: "uint256", internalType: "uint256" },
             { name: "_maximumRounds", type: "uint256", internalType: "uint256" },
+            { name: "_isWhitelist", type: "bool", internalType: "bool" },
+            { name: "_whitelistedAddress", type: "address[]", internalType: "address[]" },
           ],
           outputs: [{ name: "", type: "address", internalType: "address" }],
           stateMutability: "payable",
@@ -165,6 +167,8 @@ const deployedContracts = {
             { name: "_reputationThreshold", type: "uint256", internalType: "uint256" },
             { name: "_coreAddress", type: "address", internalType: "address" },
             { name: "_maximumRounds", type: "uint256", internalType: "uint256" },
+            { name: "_isWhitelist", type: "bool", internalType: "bool" },
+            { name: "_whitelistedAddress", type: "address[]", internalType: "address[]" },
           ],
           stateMutability: "payable",
         },
@@ -335,6 +339,13 @@ const deployedContracts = {
         },
         {
           type: "function",
+          name: "getRedeemCollateralIfRandomSampling",
+          inputs: [{ name: "user", type: "address", internalType: "address" }],
+          outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
           name: "getRewards",
           inputs: [{ name: "participant", type: "address", internalType: "address" }],
           outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
@@ -354,6 +365,13 @@ const deployedContracts = {
           type: "function",
           name: "isParticipant",
           inputs: [{ name: "", type: "address", internalType: "address" }],
+          outputs: [{ name: "", type: "bool", internalType: "bool" }],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "isWhitelist",
+          inputs: [],
           outputs: [{ name: "", type: "bool", internalType: "bool" }],
           stateMutability: "view",
         },
@@ -413,6 +431,13 @@ const deployedContracts = {
           stateMutability: "view",
         },
         { type: "function", name: "redeemCollateral", inputs: [], outputs: [], stateMutability: "nonpayable" },
+        {
+          type: "function",
+          name: "redeemCollateralIfRandomSampling",
+          inputs: [],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
         { type: "function", name: "redeemRewards", inputs: [], outputs: [], stateMutability: "nonpayable" },
         {
           type: "function",
@@ -509,6 +534,13 @@ const deployedContracts = {
           ],
           outputs: [],
           stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "whitelistedParticipants",
+          inputs: [{ name: "", type: "uint256", internalType: "uint256" }],
+          outputs: [{ name: "", type: "address", internalType: "address" }],
+          stateMutability: "view",
         },
         {
           type: "event",
@@ -611,6 +643,7 @@ const deployedContracts = {
         { type: "error", name: "InvalidPrivateKey", inputs: [] },
         { type: "error", name: "InvalidShortString", inputs: [] },
         { type: "error", name: "MaximumParticipantsReached", inputs: [] },
+        { type: "error", name: "MinimumParticipantsNotReached", inputs: [] },
         { type: "error", name: "MinimumVotesRequiredNotReached", inputs: [] },
         { type: "error", name: "NoRewardsAvailable", inputs: [] },
         { type: "error", name: "NotFinished", inputs: [] },
@@ -619,6 +652,7 @@ const deployedContracts = {
         { type: "error", name: "NotParticipant", inputs: [] },
         { type: "error", name: "NotPending", inputs: [] },
         { type: "error", name: "NotRunning", inputs: [] },
+        { type: "error", name: "NotWhitelistedParticipant", inputs: [] },
         { type: "error", name: "ProposalCreatorCannotVote", inputs: [] },
         { type: "error", name: "ProposalNotVoting", inputs: [] },
         { type: "error", name: "ProposalRoundNotMatch", inputs: [] },

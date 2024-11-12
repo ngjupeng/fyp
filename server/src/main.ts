@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { useContainer } from 'class-validator';
 import { ConfigService } from '@nestjs/config';
-import { json, urlencoded } from 'body-parser';
+import { json, text, urlencoded } from 'body-parser';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { SwaggerTheme } from 'swagger-themes';
 
@@ -63,6 +63,7 @@ async function bootstrap() {
   );
 
   app.use(json({ limit: '5mb' }));
+  app.use('/user/callback', text({ type: '*/*', limit: '5mb' }));
   app.use(urlencoded({ limit: '5mb', extended: true }));
 
   const config = new DocumentBuilder()

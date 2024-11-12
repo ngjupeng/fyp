@@ -13,6 +13,8 @@ import { ProjectEntity } from 'src/modules/project/project.entity';
 import { RoundEntity } from 'src/modules/round/round.entity';
 import { ParticipantSubmissionEntity } from 'src/modules/round/participant-submission.entity';
 import { SupportedTokenEntity } from 'src/modules/supported-token/supported-token.entity';
+import { ProviderEntity } from 'src/modules/user/provider.entity';
+import { VerificationEntity } from 'src/modules/user/verification.entity';
 
 @Module({
   imports: [
@@ -37,6 +39,8 @@ import { SupportedTokenEntity } from 'src/modules/supported-token/supported-toke
             SupportedTokenEntity,
             RoundEntity,
             ParticipantSubmissionEntity,
+            ProviderEntity,
+            VerificationEntity,
           ],
           // We are using migrations, synchronize should be set to false.
           synchronize: false,

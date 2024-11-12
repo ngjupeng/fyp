@@ -90,4 +90,17 @@ async function bindWallet(address: string): Promise<string> {
   return JSON.stringify(response.data);
 }
 
-export { getAllUsers, assignRole, removeUser, changeUserCompanies, getUserDetail, bindWallet };
+async function requestProof(data: { address: string; providerId: string }): Promise<string> {
+  const response = await api.post(
+    `user/request-proofs?address=${data.address}&providerId=${data.providerId}`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+      },
+    },
+  );
+  return JSON.stringify(response.data);
+}
+
+export { getAllUsers, assignRole, removeUser, changeUserCompanies, getUserDetail, bindWallet, requestProof };

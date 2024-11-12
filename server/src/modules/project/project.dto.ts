@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsArray,
+  IsBoolean,
   IsEnum,
   IsNotEmpty,
   IsObject,
@@ -76,6 +77,16 @@ export class ProjectBase {
   @IsObject()
   @IsNotEmpty()
   public fileStructure: object;
+
+  @ApiProperty()
+  @IsBoolean()
+  @IsNotEmpty()
+  public isWhitelist: boolean;
+
+  @ApiProperty()
+  @IsArray()
+  @IsNotEmpty()
+  public whitelistedAddress: string[];
 }
 
 export class ProjectDto extends ProjectBase {

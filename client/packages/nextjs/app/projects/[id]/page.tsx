@@ -35,6 +35,7 @@ const ProjectDetail = () => {
     refetch: refetchProjectDetails,
   } = useProjectDetails(Number(id));
 
+  console.log(projectDetail);
   const {
     data: projectCurrentRoundDetail,
     isLoading: projectCurrentRoundDetailLoading,
@@ -89,7 +90,17 @@ const ProjectDetail = () => {
     functionName: "calculateRewards",
     args: [userCredentials?.address || "0x0"],
   });
-  console.log(rewards);
+
+  const {
+    data: redeemableCollateralIfRandomSampling,
+    isLoading: redeemableCollateralIfRandomSamplingFailureLoading,
+    refetch: refetchRedeemableCollateralIfRandomSamplingFailure,
+  } = useReadContract({
+    abi: agreementAbi,
+    address: projectDetail?.agreementAddress || "0x0",
+    functionName: "getRedeemCollateralIfRandomSampling",
+    args: [userCredentials?.address || "0x0"],
+  });
 
   const {
     data: collaterals,
@@ -121,6 +132,7 @@ const ProjectDetail = () => {
     account: userCredentials.address,
   });
 
+  console.log(privateKey);
   const { writeContractAsync: agreementContractWrite } = useWriteContract();
 
   const { mutate: joinProject, isPending: joinProjectPending } = useJoinProject(
@@ -263,6 +275,22 @@ const ProjectDetail = () => {
     }
   };
 
+  const handleRedeemCollateralIfRandomSampling = async () => {
+    try {
+      const result = await agreementContractWrite({
+        abi: agreementAbi,
+        address: projectDetail?.agreementAddress || "0x0",
+        functionName: "redeemCollateralIfRandomSampling",
+        args: [],
+      });
+      await refetchRedeemableCollateralIfRandomSamplingFailure();
+      toast.success("Redeem collateral success");
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to redeem collateral");
+    }
+  };
+
   const handleRedeemCollateral = async () => {
     try {
       const result = await agreementContractWrite({
@@ -312,12 +340,9 @@ const ProjectDetail = () => {
                   <div>
                     {projectDetail?.participants.find(participant => participant.address == userCredentials.address) ? (
                       <PrivateKey
-                        privateKey={
-                          privateKey?.result[0]
-                            ?.toString()
-                            .concat(privateKey?.result[2]?.toString())
-                            .concat(privateKey?.result[1]?.toString()) ?? ""
-                        }
+                        privateKey={(privateKey?.result[0]?.toString().padStart(16, "0") ?? "")
+                          .concat(privateKey?.result[2]?.toString() ?? "")
+                          .concat(privateKey?.result[1]?.toString().padStart(16, "0") ?? "")}
                       />
                     ) : (
                       <div></div>
@@ -453,7 +478,8 @@ const ProjectDetail = () => {
                           Participants Amount
                         </th>
                         <td className="px-6 py-4">
-                          {projectDetail?.participants?.length} / {projectDetail?.maximumParticipantAllowed}
+                          {projectDetail?.participants?.length} / {projectDetail?.maximumParticipantAllowed} (Exceeding
+                          participant will be chosen randomly)
                         </td>
                       </tr>
                       <tr className="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
@@ -519,6 +545,28 @@ const ProjectDetail = () => {
                         </th>
                         <td className="px-6 py-4">{projectDetail?.agreementAddress}</td>
                       </tr>
+                      <tr className="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
+                        <th
+                          scope="row"
+                          className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+                        >
+                          Whitelist
+                        </th>
+                        <td className="px-6 py-4">{projectDetail?.isWhitelist ? "Yes" : "No"}</td>
+                      </tr>
+                      <tr className="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
+                        <th
+                          scope="row"
+                          className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+                        >
+                          Whitelist Address
+                        </th>
+                        <td className="px-6 py-4">
+                          {projectDetail?.whitelistedAddress.map(address => (
+                            <div key={address}>{address}</div>
+                          ))}
+                        </td>
+                      </tr>
                     </tbody>
                   </table>
 
@@ -548,7 +596,10 @@ const ProjectDetail = () => {
                     <div>
                       <div className="mt-6">
                         <div className="flex justify-between items-center">
-                          <h3 className="text-xl font-bold text-white">Current Round Participant Submission</h3>
+                          <h3 className="text-xl font-bold text-white">
+                            {projectDetail?.status.toLowerCase() == "running" ? "Current round " : "Latest round"}
+                            participant Submission
+                          </h3>
                           <div className="flex gap-3">
                             {roundStateConfirmed == false && projectDetail?.status.toLowerCase() === "running" && (
                               <Button
@@ -571,7 +622,8 @@ const ProjectDetail = () => {
                           </div>
                         </div>
                         <h4 className="my-2 text-lg">
-                          Current round global model:{" "}
+                          {projectDetail?.status.toLowerCase() == "running" ? "Current round" : "Latest round"} global
+                          model:{" "}
                           <span
                             className="font-bold text-blue-500 cursor-pointer"
                             onClick={() => {
@@ -586,7 +638,8 @@ const ProjectDetail = () => {
                           </span>
                         </h4>
                         <h4 className="my-2 text-lg">
-                          Current round confirmed state:{" "}
+                          {projectDetail?.status.toLowerCase() == "running" ? "Current round" : "Latest round"}{" "}
+                          confirmed state:{" "}
                           <span className="font-bold">
                             {roundStateConfirmedCount?.toString()}/{projectDetail?.participants?.length}
                           </span>
@@ -629,7 +682,10 @@ const ProjectDetail = () => {
 
                       <div className="mt-6">
                         <div className="flex justify-between items-center">
-                          <h3 className="text-xl font-bold text-white">Current Round Proposal</h3>
+                          <h3 className="text-xl font-bold text-white">
+                            {projectDetail?.status.toLowerCase() == "running" ? "Current round" : "Latest round"}{" "}
+                            Proposal
+                          </h3>
                           <CreateProposal
                             participants={projectDetail?.participants}
                             agreementAddress={projectDetail?.agreementAddress}
@@ -772,6 +828,25 @@ const ProjectDetail = () => {
                           <div>
                             Your collateral amount: {formatUnits(collaterals || BigInt(0), 18)} TFHE
                             <span className="text-blue-500 cursor-pointer" onClick={handleRedeemCollateral}>
+                              [Redeem]
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-6">
+                        <h3 className="text-xl font-bold text-white">
+                          Redeemable collateral due to failure to select as participant
+                        </h3>
+
+                        <div className="relative">
+                          <div>
+                            Redeemable collateral:{" "}
+                            {parseFloat(formatUnits(BigInt(redeemableCollateralIfRandomSampling ?? 0), 18))} TFHE
+                            <span
+                              onClick={handleRedeemCollateralIfRandomSampling}
+                              className="text-blue-500 cursor-pointer"
+                            >
                               [Redeem]
                             </span>
                           </div>

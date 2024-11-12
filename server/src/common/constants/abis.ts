@@ -1,7 +1,7 @@
 export const abis = {
   federatedCore: {
     name: '0x4Eb9Ec1366De3256f035E24b268249c29dA7e08e',
-    address: '0x4Eb9Ec1366De3256f035E24b268249c29dA7e08e',
+    address: '0xcb6cDd4bb2F7b69992Fa901E3C20F23B2Ce9829a',
     abi: {
       abi: [
         {
@@ -43,6 +43,12 @@ export const abis = {
               name: '_maximumRounds',
               type: 'uint256',
               internalType: 'uint256',
+            },
+            { name: '_isWhitelist', type: 'bool', internalType: 'bool' },
+            {
+              name: '_whitelistedAddress',
+              type: 'address[]',
+              internalType: 'address[]',
             },
           ],
           outputs: [{ name: '', type: 'address', internalType: 'address' }],

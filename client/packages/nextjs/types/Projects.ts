@@ -66,6 +66,8 @@ export type ProjectDetails = {
   initialGlobalModel: string;
   fileStructure: Object;
   rounds: Round[];
+  isWhitelist: boolean;
+  whitelistedAddress: string[];
 };
 
 export type Round = {

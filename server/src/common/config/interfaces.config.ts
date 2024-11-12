@@ -50,6 +50,15 @@ export interface OthersConfig {
   pinataJwt: string;
   pinataApiKey: string;
   pinataApiSecret: string;
+  reclaim: {
+    applicationId: string;
+    applicationSecret: string;
+    defaultSupportedProvidersId: string;
+    defaultSupportedProvidersName: string;
+    defaultSupportedProvidersDescription: string;
+    defaultSupportedProvidersCategory: string;
+    callbackUrl: string;
+  };
 }
 
 // @notice

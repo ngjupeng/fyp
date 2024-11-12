@@ -85,4 +85,6 @@ interface IFederatedAgreementTypes {
   error InvalidAgreementStatus();
   error InsufficientFunds();
   error ProposalCreatorCannotVote();
+  error MinimumParticipantsNotReached();
+  error NotWhitelistedParticipant();
 }

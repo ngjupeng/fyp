@@ -1,4 +1,10 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { RoundRepository } from './round.repository';
 import { RoundDetailResponseDto, RoundDto } from './round.dto';
 import { ProjectRepository } from '../project/project.repository';
@@ -13,6 +19,7 @@ import * as path from 'path';
 import { PinataSDK } from 'pinata-web3';
 import { AppConfigService } from 'src/common/config/services/config.service';
 import { classToPlain } from 'class-transformer';
+import { ProjectService } from '../project/project.service';
 
 @Injectable()
 export class RoundService {
@@ -22,6 +29,8 @@ export class RoundService {
     private readonly projectRepository: ProjectRepository,
     private readonly participantSubmissionRepository: ParticipantSubmissionRepository,
     private readonly appConfigService: AppConfigService,
+    @Inject(forwardRef(() => ProjectService))
+    private readonly projectService: ProjectService,
   ) {}
 
   public async createFirstRound(projectId: number): Promise<void> {
@@ -59,6 +68,7 @@ export class RoundService {
       abi: abis.federatedCore.abi.abi,
       eventName: 'AgreementProceedNextRound',
       onLogs: (logs) => {
+        console.log('WATCH NEXT ROUND EVENT TRIGGERED!');
         const event = logs[0] as any;
         const agreementAddress = event?.args?.agreement;
         this.proceedToNextRound(agreementAddress);
@@ -151,8 +161,14 @@ export class RoundService {
         roundNumber: currentRound,
         globalModelIPFSLink: ipfsHash,
       });
-      project.currentRound = currentRound;
-      await this.projectRepository.updateOne({ id: project.id }, project);
+
+      // check if current round is greater than maximum rounds
+      if (currentRound > project.maximumRounds) {
+        await this.projectService.endProject(project.agreementAddress);
+      } else {
+        project.currentRound = currentRound;
+        await this.projectRepository.updateOne({ id: project.id }, project);
+      }
     } catch (error) {
       console.log(error);
       throw new BadRequestException(error);
@@ -197,6 +213,8 @@ export class RoundService {
         n: '0x0',
         totalRewardAmount: 5,
         verificationDatasetURL: 'test',
+        isWhitelist: false,
+        whitelistedAddress: [],
       });
     }
 

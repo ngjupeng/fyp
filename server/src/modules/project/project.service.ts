@@ -1,4 +1,10 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 
 import {
   ProjectBase,
@@ -16,14 +22,17 @@ import { abis } from 'src/common/constants/abis';
 import { publicClient } from 'src/common/viem/public-client';
 import { RoundService } from '../round/round.service';
 import { RoundEntity } from '../round/round.entity';
+import { VerificationRepository } from '../user/verification.repository';
+import { MoreThan } from 'typeorm';
 
 @Injectable()
 export class ProjectService {
   private readonly logger = new Logger(ProjectService.name);
   constructor(
     private readonly projectRepository: ProjectRepository,
-    private readonly supportedTokenService: SupportedTokenService,
+    @Inject(forwardRef(() => RoundService))
     private readonly roundService: RoundService,
+    private readonly verificationRepository: VerificationRepository,
   ) {}
 
   public async createProject(
@@ -74,6 +83,18 @@ export class ProjectService {
   }
 
   public async joinProject(user: UserEntity, projectId: number): Promise<void> {
+    // first check if user has a verified identity
+    const verifiedIdentity = await this.verificationRepository.find({
+      user: { id: user.id },
+      count: MoreThan(0),
+    });
+
+    if (verifiedIdentity.length < 2) {
+      throw new BadRequestException(
+        'User has no verified identity, please verify your identity first',
+      );
+    }
+
     // get project
     const project = await this.projectRepository.findOne(
       { id: projectId },
@@ -147,7 +168,7 @@ export class ProjectService {
     await this.roundService.createFirstRound(projectId);
   }
 
-  private async endProject(agreementAddress: string): Promise<void> {
+  public async endProject(agreementAddress: string): Promise<void> {
     // get project
     const project = await this.projectRepository.findOne({
       agreementAddress,
@@ -175,6 +196,7 @@ export class ProjectService {
       abi: abis.federatedCore.abi.abi,
       eventName: 'AgreementFinished',
       onLogs: (logs) => {
+        console.log('WATCH PROJECT FINISH EVENT TRIGGERED!');
         console.log('logs', logs);
         const event = logs[0] as any;
         const agreementAddress = event?.args?.agreement;

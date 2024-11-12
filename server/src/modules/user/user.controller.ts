@@ -7,6 +7,9 @@ import {
   Patch,
   Put,
   Body,
+  Post,
+  HttpCode,
+  Req,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -24,6 +27,11 @@ import { Role } from '../../common/enums/role';
 import { Roles } from '../../common/decorators/roles';
 import { UserWithoutSecretDto } from './user.response.dto';
 import { BindAddressDto } from './user.dto';
+import {
+  RequestProofResponseDto,
+  VerificationCallbackDto,
+} from './verification.dto';
+import { Public } from 'src/common/decorators';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RoleGuard)
@@ -151,5 +159,42 @@ export class UserController {
     @Body() body: BindAddressDto,
   ): Promise<void> {
     return this.userService.bindAddress(req.user, body.address);
+  }
+
+  @Post('/request-proofs')
+  @ApiOperation({
+    summary:
+      'Request a proof with chosen provider, user must provide address and signature to request proof',
+  })
+  @ApiResponse({
+    status: 201,
+    type: RequestProofResponseDto,
+  })
+  @ApiQuery({
+    name: 'providerId',
+    required: true,
+  })
+  @ApiQuery({
+    name: 'address',
+    required: true,
+  })
+  public async requestProof(
+    @Query('address') address: string,
+    @Query('providerId') providerId: string,
+  ): Promise<RequestProofResponseDto> {
+    return this.userService.requestProof(address, providerId);
+  }
+
+  // @follow-up: only allow verification server to call this endpoint
+  @Post('/callback')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Only call by verification server when the proof was verified',
+  })
+  @ApiBody({ type: VerificationCallbackDto })
+  @Public()
+  public async verificationCallback(@Req() req: VerificationCallbackDto) {
+    console.log(req);
+    return this.userService.verificationCallback(req.body);
   }
 }

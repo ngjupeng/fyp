@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useContext, useState } from "react";
+import { useRouter } from "next/navigation";
 import axios from "axios";
 import { JsonRpcProvider } from "ethers";
 import { EncryptionTypes, FhenixClient } from "fhenixjs";
@@ -15,6 +16,7 @@ import useCreateProject from "~~/hooks/server/useCreateProject";
 import { publicClient } from "~~/services/web3/fhenixClient";
 
 const CreateProject = () => {
+  const router = useRouter();
   const agreementAbi = deployedContracts[8008135].FederatedAgreement.abi;
   const coreAddress = deployedContracts[8008135].FederatedCore.address;
   const coreAbi = deployedContracts[8008135].FederatedCore.abi;
@@ -41,6 +43,8 @@ const CreateProject = () => {
     agreementAddress: string;
     initialGlobalModel: string;
     fileStructure: Object;
+    isWhitelist: boolean;
+    whitelistedAddress: string[];
   }>({
     name: "",
     description: "",
@@ -55,6 +59,8 @@ const CreateProject = () => {
     agreementAddress: "",
     initialGlobalModel: "",
     fileStructure: {},
+    isWhitelist: false,
+    whitelistedAddress: [],
   });
 
   // contract hooks
@@ -126,6 +132,8 @@ const CreateProject = () => {
           BigInt(maximumParticipantAllowed),
           BigInt(minimumReputation),
           BigInt(maximumRounds),
+          projectDetails.isWhitelist,
+          projectDetails.whitelistedAddress,
         ],
         value: parseEther(String(value)),
       });
@@ -141,9 +149,7 @@ const CreateProject = () => {
 
     // initialize Fhenix Client
     const client = new FhenixClient({ provider });
-    console.log(phi);
     const first30 = Number(phi.slice(0, 16));
-    console.log(first30);
     const last30 = Number(phi.slice(-16));
     const middlePart = phi.slice(16, -16);
 
@@ -164,6 +170,7 @@ const CreateProject = () => {
       });
 
       console.log("Write contract result:", result);
+      router.replace(`/home`);
       toast.success("Private key set successfully");
     } catch (error) {
       console.error("Error setting private key:", error);
@@ -251,9 +258,25 @@ const CreateProject = () => {
             const { model_name, parameters } = json;
             const { flattenedArray, structure } = flattenParameters(parameters);
 
+            // multiply all elements in flattenedArray by 10000
+            // and for the remaining decimals, keep it at max two decimal places, for example 0.123456789 -> 0.12
+            const multipliedArray = flattenedArray.map(num => {
+              const multiplied = num * 100000;
+              return Math.round(multiplied * 100) / 100;
+            });
+
             const { phi, g, n } = await generateKeypair();
             setPhi(phi);
-            const encryptedArray = await encryptArray(flattenedArray, g, n);
+            const encryptedArray = await encryptArray(multipliedArray, g, n);
+
+            const response = await fetch("/api/decrypt", {
+              method: "POST",
+              body: JSON.stringify({ encryptedArray, phi, n }),
+            });
+            const data = await response.json();
+            const array = data?.decryptedArray?.split("|");
+            console.log(array);
+
             const ipfsHash = await uploadToIPFS(model_name, encryptedArray);
 
             setProjectDetails({
@@ -320,6 +343,23 @@ const CreateProject = () => {
     const missingFields = requiredFields.filter(([_, value]) => value === "");
 
     if (missingFields.length === 0) {
+      if (projectDetails.maximumRounds <= 1) {
+        toast.error("Maximum rounds must be greater than 1");
+        return;
+      }
+      if (projectDetails.collateralAmount <= 0) {
+        toast.error("Collateral amount must be greater than 0");
+        return;
+      }
+      if (projectDetails.totalRewardAmount <= 0) {
+        toast.error("Total reward amount must be greater than 0");
+        return;
+      }
+      if (projectDetails.maximumParticipantAllowed <= 1) {
+        toast.error("Maximum participants allowed must be greater than 1");
+        return;
+      }
+
       // first create project record in db
       console.log(projectDetails);
 
@@ -328,6 +368,16 @@ const CreateProject = () => {
       const missingFieldNames = missingFields.map(([key]) => key).join(", ");
       toast.error(`Please fill all required fields: ${missingFieldNames}`);
     }
+  };
+
+  const handleWhitelistChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setProjectDetails({ ...projectDetails, isWhitelist: e.target.checked });
+  };
+
+  const handleWhitelistAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Split the input by commas and trim whitespace
+    const addresses = e.target.value.split(",").map(addr => addr.trim());
+    setProjectDetails({ ...projectDetails, whitelistedAddress: addresses });
   };
 
   return (
@@ -366,7 +416,7 @@ const CreateProject = () => {
                 </button>
               </div>
 
-              <div className="mt-5">Your project has been set up successfully!</div>
+              <div className="mt-5">Until here means your project has been set up successfully!</div>
             </div>
           ) : (
             <div className="py-4 px-9">
@@ -497,8 +547,40 @@ const CreateProject = () => {
                     </p>
                   </div>
                 </div>
+                <div className="w-full px-3 sm:w-1/2">
+                  <div className="mb-5">
+                    <label htmlFor="email" className="mb-3 block text-base font-medium text-white">
+                      Enable Whitelist
+                    </label>
+                    <label className="inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        id="isWhitelist"
+                        checked={projectDetails.isWhitelist}
+                        onChange={handleWhitelistChange}
+                        className="sr-only peer"
+                      />
+                      <div className="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+                </div>
               </div>
-
+              <div className="mb-5">
+                <label htmlFor="email" className="mb-3 block text-base font-medium text-white">
+                  Whitelisted Address
+                </label>
+                <input
+                  onChange={handleWhitelistAddressChange}
+                  value={projectDetails.whitelistedAddress.join(", ")}
+                  type="text"
+                  name="whitelistedAddress"
+                  id="whitelistedAddress"
+                  placeholder="0x1, 0x2 ..."
+                  disabled={!projectDetails.isWhitelist}
+                  className="w-full rounded-md border border-base-100 py-3 px-6 text-base font-medium text-[#6B7280] outline-none focus:shadow-md"
+                />
+                <p className="my-0 mt-1 text-xs text-gray-500">* Address separate by comma</p>
+              </div>
               <div className="mb-6 pt-4">
                 <label className="mb-3 block text-base font-medium text-white">Upload Initial Model</label>
 

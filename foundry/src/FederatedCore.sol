@@ -39,7 +39,9 @@ contract FederatedCore is IFederatedCore, Ownable {
     uint256 _collateralAmount,
     uint256 _maximumParticipants,
     uint256 _reputationThreshold,
-    uint256 _maximumRounds
+    uint256 _maximumRounds,
+    bool _isWhitelist,
+    address[] memory _whitelistedAddress
   ) public payable returns (address) {
     if (msg.value < _collateralAmount + _totalRewards) {
       revert InsufficientFunds();
@@ -52,7 +54,9 @@ contract FederatedCore is IFederatedCore, Ownable {
       _maximumParticipants,
       _reputationThreshold,
       address(this),
-      _maximumRounds
+      _maximumRounds,
+      _isWhitelist,
+      _whitelistedAddress
     );
 
     agreementCount++;

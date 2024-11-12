@@ -33,6 +33,8 @@ export class UserDto extends UserSignUpDto {
   public status: UserStatus;
   public referralCode?: ReferralCodeEntity | null;
   public referredBy?: UserEntity | null;
+  public kaggleUsername?: string | null;
+  public googleEmail?: string | null;
 }
 
 export class BindAddressDto {

@@ -21,7 +21,7 @@ def encrypt_array(array, g, n):
     cs.cs.keys["public_key"]["g"] = g
     cs.cs.keys["public_key"]["n"] = n
     # remove first and last character
-    array = array[1:-1]
+    # array = array[0:-1]
     array = array.split("|")
     array = [float(item) for item in array]
     encrypted = cs.encrypt(plaintext=array)

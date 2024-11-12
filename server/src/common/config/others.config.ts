@@ -12,4 +12,15 @@ export default registerAs('others', () => ({
   pinataJwt: process.env.PINATA_JWT,
   pinataApiKey: process.env.PINATA_API_KEY,
   pinataApiSecret: process.env.PINATA_API_SECRET,
+  reclaim: {
+    applicationId: process.env.RECLAIM_APPLICATION_ID,
+    applicationSecret: process.env.RECLAIM_APPLICATION_SECRET,
+    defaultSupportedProvidersId: process.env.DEFAULT_SUPPORTED_PROVIDERS_ID,
+    defaultSupportedProvidersName: process.env.DEFAULT_SUPPORTED_PROVIDERS_NAME,
+    defaultSupportedProvidersDescription:
+      process.env.DEFAULT_SUPPORTED_PROVIDERS_DESCRIPTION,
+    defaultSupportedProvidersCategory:
+      process.env.DEFAULT_SUPPORTED_PROVIDERS_CATEGORY,
+    callbackUrl: process.env.RECLAIM_CALLBACK_URL,
+  },
 }));

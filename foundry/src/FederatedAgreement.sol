@@ -31,6 +31,8 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
   uint256 public round;
   uint256 public proposalId;
   FederatedAgreementStatus public status;
+  address[] public whitelistedParticipants;
+  bool public isWhitelist;
 
   mapping(address => bool) public isParticipant;
   mapping(uint256 => Proposal[]) public proposals;
@@ -83,7 +85,9 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
     uint256 _maximumParticipants,
     uint256 _reputationThreshold,
     address _coreAddress,
-    uint256 _maximumRounds
+    uint256 _maximumRounds,
+    bool _isWhitelist,
+    address[] memory _whitelistedAddress
   ) payable {
     owner = _owner;
     status = FederatedAgreementStatus.PENDING;
@@ -100,6 +104,9 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
 
     // dynamically calculate rewards for each round
     REWARD_EACH_ROUND = TOTAL_REWARDS / MAXIMUM_ROUNDS;
+
+    isWhitelist = _isWhitelist;
+    whitelistedParticipants = _whitelistedAddress;
   }
 
   // ************************************
@@ -134,6 +141,11 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
     // if ady running, throw error
     if (status == FederatedAgreementStatus.RUNNING || status == FederatedAgreementStatus.FINISHED) {
       revert InvalidAgreementStatus();
+    }
+
+    // if participants is more than maximum participants, random sampling maximum participants
+    if (participants.length > MAXIMUM_PARTICIPANTS) {
+      participants = _randomSampling(MAXIMUM_PARTICIPANTS);
     }
 
     status = FederatedAgreementStatus.RUNNING;
@@ -284,8 +296,14 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
   }
 
   function addParticipant(address participant) public payable onlyPending {
-    if (participants.length >= MAXIMUM_PARTICIPANTS) {
-      revert MaximumParticipantsReached();
+    // if (participants.length >= MAXIMUM_PARTICIPANTS) {
+    //   revert MaximumParticipantsReached();
+    // }
+
+    if (isWhitelist) {
+      if (!_isWhitelistedParticipant(participant)) {
+        revert NotWhitelistedParticipant();
+      }
     }
 
     // if ady a participant, revert
@@ -294,7 +312,9 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
     }
 
     // reputation check
-    _reputationCheck(participant);
+    if (!isWhitelist) {
+      _reputationCheck(participant);
+    }
 
     // pay collateral
     if (msg.value < COLLATERAL_AMOUNT) {
@@ -306,6 +326,24 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
     collaterals[participant] = COLLATERAL_AMOUNT;
 
     emit ParticipantAdded(participant);
+  }
+
+  function redeemCollateralIfRandomSampling() public {
+    // if user have collateral but not in participants, redeem collateral
+    if (collaterals[msg.sender] > 0 && !isParticipant[msg.sender] && status == FederatedAgreementStatus.RUNNING) {
+      uint256 amount = collaterals[msg.sender];
+      delete collaterals[msg.sender];
+      payable(address(msg.sender)).transfer(amount);
+      emit CollateralRedeemed(msg.sender, amount);
+    }
+  }
+
+  function getRedeemCollateralIfRandomSampling(address user) public view returns (uint256) {
+    // if user have collateral but not in participants, redeem collateral
+    if (collaterals[user] > 0 && !isParticipant[user] && status == FederatedAgreementStatus.RUNNING) {
+      return collaterals[user];
+    }
+    return 0;
   }
 
   function redeemCollateral() public onlyFinished {
@@ -329,7 +367,7 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
     emit RewardsRedeemed(msg.sender, round, amount);
   }
 
-  function getPrivateKey() public returns (uint128, uint128, string memory) {
+  function getPrivateKey() public onlyRunning returns (uint128, uint128, string memory) {
     // check is participant
     _requiredParticipant(msg.sender);
     // uint128 highPrivateKey = FHE.decrypt(FHE.asEuint128(encHighPrivateKey));
@@ -400,12 +438,12 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
 
   function _proceedNextRound() public {
     // need at least 2/3 of participants to confirm the round state
-    uint256 minimumParticipantsRequired = (participants.length * 2) / 3;
+    uint256 minimumParticipantsRequired = ((participants.length + 2) / 3) * 2;
 
     if (roundStateConfirmedCount[round] >= minimumParticipantsRequired) {
       round += 1;
       // check if maximum rounds is reached
-      if (round > MAXIMUM_ROUNDS) {
+      if (round > MAXIMUM_ROUNDS - 1) {
         status = FederatedAgreementStatus.FINISHED;
         _increaseAllParticipantsReputation();
         IFederatedCore(CORE_ADDRESS).emitAgreementFinished(address(this), round);
@@ -420,9 +458,30 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
     if (lastClaimed >= round) {
       return 0;
     }
+
     uint256 originalRewards = rewards[participant];
-    uint256 unclaimedRounds = ((round - lastClaimed) * REWARD_EACH_ROUND) + originalRewards;
-    return unclaimedRounds;
+    uint256 unclaimedRewards = 0;
+
+    // Check each round for IPFS submission
+    for (uint256 i = lastClaimed + 1; i <= round; i++) {
+      // Only add rewards if they submitted IPFS hash for that round
+      if (bytes(roundIPFSHashes[participant][i]).length > 0) {
+        unclaimedRewards += REWARD_EACH_ROUND;
+      }
+    }
+
+    // Apply penalty based on suspicious count
+    if (suspiciousCounts[participant] > 0) {
+      // 20% reduction for each suspicious count (up to 100%)
+      uint256 penaltyPercent = suspiciousCounts[participant] * 2000; // 2000 = 20%
+      if (penaltyPercent > BASIS_POINT) {
+        penaltyPercent = BASIS_POINT; // Cap at 100%
+      }
+
+      unclaimedRewards = (unclaimedRewards * (BASIS_POINT - penaltyPercent)) / BASIS_POINT;
+    }
+
+    return unclaimedRewards + originalRewards;
   }
 
   function _increaseAllParticipantsReputation() private {
@@ -449,5 +508,36 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
 
   function _isParticipant(address participant) private view returns (bool) {
     return isParticipant[participant];
+  }
+
+  function _isWhitelistedParticipant(address participant) private view returns (bool) {
+    for (uint256 i = 0; i < whitelistedParticipants.length; i++) {
+      if (whitelistedParticipants[i] == participant) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function _randomSampling(uint256 sampleSize) private view returns (address[] memory) {
+    address[] memory currentParticipants = participants;
+    uint256 n = currentParticipants.length;
+    address[] memory result = new address[](sampleSize);
+
+    // Fisher-Yates shuffle algorithm with random selection
+    for (uint256 i = 0; i < sampleSize; i++) {
+      // Generate random index based on block properties
+      uint256 j = i + (uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao, i))) % (n - i));
+
+      // Swap elements
+      address temp = currentParticipants[i];
+      currentParticipants[i] = currentParticipants[j];
+      currentParticipants[j] = temp;
+
+      // Add selected participant to result
+      result[i] = currentParticipants[i];
+    }
+
+    return result;
   }
 }
