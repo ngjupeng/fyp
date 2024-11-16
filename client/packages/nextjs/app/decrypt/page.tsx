@@ -39,6 +39,8 @@ const Decrypt = () => {
   };
 
   const handleDecrypt = async () => {
+    const BASIS_POINT = 1000;
+    const OFFSET = 10;
     if (!encryptedArray || !phi || !n) {
       toast.error("Please fill all the fields");
       return;
@@ -49,7 +51,10 @@ const Decrypt = () => {
     });
     const data = await response.json();
     const array = data?.decryptedArray?.split("|");
-    const decryptedArray = array.map((num: any) => Number(num) / 100000);
+    const decryptedArray = array.map((num: any) => {
+      return Number(num) / (BASIS_POINT * BASIS_POINT) - OFFSET;
+    });
+
     setDecryptedArray(decryptedArray);
     console.log(decryptedArray);
   };

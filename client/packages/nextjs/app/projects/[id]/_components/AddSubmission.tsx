@@ -101,6 +101,8 @@ export default function AddSubmission({
   };
 
   const handleUploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const BASIS_POINT = 1000;
+    const OFFSET = 10;
     const file = e.target.files?.[0];
     if (file && file.type === "application/json") {
       const reader = new FileReader();
@@ -118,9 +120,8 @@ export default function AddSubmission({
               return;
             }
             const multipliedArray = flattenedArray.map(num => {
-              const multiplied = num * 100000;
-
-              return parseInt(multiplied.toFixed(0)).toString();
+              num = Number((num + OFFSET) * BASIS_POINT);
+              return num.toString();
             });
 
             const encryptedArray = await encryptArray(multipliedArray, g, n);

@@ -21,7 +21,7 @@ def encrypt_array(array, g, n):
     cs.cs.keys["public_key"]["g"] = g
     cs.cs.keys["public_key"]["n"] = n
     # remove first and last character
-    # array = array[0:-1]
+    array = array[1:-1]
     array = array.split("|")
     array = [float(item) for item in array]
     encrypted = cs.encrypt(plaintext=array)
@@ -39,6 +39,7 @@ def decrypt_array(encrypted_array, phi, n):
     fraction = [string_to_fraction(frac_str) for frac_str in encrypted_array]
     encrypted_tensor = EncryptedTensor(fraction, cs)
     decrypted = cs.decrypt(encrypted_tensor)
+    print(decrypted)
     return "|".join(map(str, decrypted))
 
 
@@ -53,7 +54,6 @@ def generate_keypair():
 
 
 def homomorphic_addition(encrypted_arrays, n):
-    BASIS_POINT = 1000
     cs = Paillier(
         keys={
             "public_key": {"n": int(n)},
@@ -77,7 +77,8 @@ def homomorphic_addition(encrypted_arrays, n):
         fraction2 = [string_to_fraction(frac_str) for frac_str in encrypted_array2]
         encrypted_tensor2 = EncryptedTensor(fraction2, cs)
         encrypted_tensor_result = encrypted_tensor_result + encrypted_tensor2
-    scaling_factor = int((1.0 / length) * BASIS_POINT)
+
+    scaling_factor = int((1.0 / length) * 1000)  # Use smaller BASIS_POINT
     encrypted_tensor_result = encrypted_tensor_result * scaling_factor
 
     fraction_strings = [

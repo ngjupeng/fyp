@@ -246,6 +246,8 @@ const CreateProject = () => {
   };
 
   const handleUploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const BASIS_POINT = 1000;
+    const OFFSET = 10;
     const file = e.target.files?.[0];
     if (file && file.type === "application/json") {
       const reader = new FileReader();
@@ -261,8 +263,8 @@ const CreateProject = () => {
             // multiply all elements in flattenedArray by 10000
             // and for the remaining decimals, keep it at max two decimal places, for example 0.123456789 -> 0.12
             const multipliedArray = flattenedArray.map(num => {
-              const multiplied = num * 100000;
-              return Math.round(multiplied * 100) / 100;
+              num = Number((num + OFFSET) * BASIS_POINT);
+              return num;
             });
 
             const { phi, g, n } = await generateKeypair();
