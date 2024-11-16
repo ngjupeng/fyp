@@ -199,6 +199,7 @@ export class UserService {
         { verified: true, count: verificationRecord.count + 1 },
       );
     } catch (error) {
+      throw new BadRequestException(error);
       console.error('Parse error:', error);
     }
   }
@@ -406,126 +407,6 @@ export class UserService {
       throw new NotFoundException(ErrorAuth.InvalidCredentials);
     }
     return userEntity;
-  }
-
-  public async updateRole(
-    callerUser: UserEntity,
-    id: number,
-    role: Role,
-    isRemove: boolean,
-  ): Promise<void> {
-    if (callerUser.id === id) {
-      throw new BadRequestException(ErrorUser.RoleSelfAssign);
-    }
-
-    const userEntity = await this.userRepository.findOne({ id });
-    if (!userEntity) {
-      throw new NotFoundException(ErrorUser.NotFound);
-    }
-
-    if (userEntity?.role === Role.ADMIN) {
-      throw new BadRequestException(ErrorUser.AdminRoleCannotBeChanged);
-    }
-
-    if (
-      userEntity?.role === Role.ADMINONLYVIEW &&
-      callerUser.role !== Role.ADMIN
-    ) {
-      throw new BadRequestException(ErrorUser.RoleCannotBeChanged);
-    }
-
-    userEntity.role = isRemove ? null : role;
-    await userEntity.save();
-  }
-
-  public async updateTwoFactorAuthSecret(
-    userEntity: UserEntity,
-    secret: string,
-  ): Promise<UserEntity> {
-    userEntity.twoFactorAuthSecret = secret;
-    return userEntity.save();
-  }
-
-  public async changeTwoFactorAuth(
-    userEntity: UserEntity,
-    enable: boolean,
-  ): Promise<UserEntity> {
-    userEntity.isTwoFactorAuthEnabled = enable;
-    return userEntity.save();
-  }
-
-  public async list(
-    page: number,
-    limit: number,
-    isExtend?: boolean,
-    idsStr?: string,
-    onlyActiveUsers?: boolean,
-  ): Promise<UserWithoutSecretDto[]> {
-    isExtend = String(isExtend) == 'true';
-    // map ids str to array of ids
-    let userEntities: UserEntity[];
-    const ids = idsStr
-      ? idsStr.split(',').map((id) => parseInt(id))
-      : undefined;
-    if (ids) {
-      userEntities = await this.userRepository.find(
-        { id: In(ids) },
-        {
-          skip: page * limit,
-          take: limit,
-          relations: ['referralCode', 'referredBy', 'referredBy.referralCode'],
-        },
-      );
-    }
-    if (onlyActiveUsers) {
-      userEntities = await this.userRepository.find(
-        {
-          status: UserStatus.ACTIVE,
-        },
-        {
-          skip: page * limit,
-          take: limit,
-          relations: ['referralCode', 'referredBy', 'referredBy.referralCode'],
-        },
-      );
-    }
-    userEntities = await this.userRepository.find(
-      {},
-      {
-        skip: page * limit,
-        take: limit,
-        relations: ['referralCode', 'referredBy', 'referredBy.referralCode'],
-      },
-    );
-    // return with the same format as getById
-    return userEntities.map((userEntity) => ({
-      id: userEntity.id,
-      createdAt: userEntity.createdAt,
-      updatedAt: userEntity.updatedAt,
-      email: userEntity.email,
-      name: userEntity.name,
-      role: userEntity.role,
-      status: userEntity.status,
-      isTwoFactorAuthEnabled: userEntity.isTwoFactorAuthEnabled,
-      referralCode: isExtend
-        ? userEntity.referralCode
-        : userEntity.referralCode
-          ? userEntity.referralCode.id
-          : null,
-      referredBy: isExtend
-        ? userEntity.referredBy
-          ? {
-              id: userEntity.referredBy.id,
-              email: userEntity.referredBy.email,
-              name: userEntity.referredBy.name,
-              role: userEntity.referredBy.role,
-              referralCode: userEntity.referredBy.referralCode,
-            }
-          : null
-        : userEntity.referredBy
-          ? userEntity.referredBy.id
-          : null,
-    }));
   }
 
   public async bindAddress(

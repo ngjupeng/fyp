@@ -11,13 +11,13 @@ import { ProjectRepository } from '../project/project.repository';
 import { CreateParticipantSubmissionDto } from './participant-submission.dto';
 import { UserEntity } from '../user/user.entity';
 import { ParticipantSubmissionRepository } from './participant-submission.repository';
-import { publicClient } from 'src/common/viem/public-client';
-import { abis } from 'src/common/constants/abis';
-import { ProjectStatusType } from 'src/common/enums/project';
+import { publicClient } from '../../common/viem/public-client';
+import { abis } from '../../common/constants/abis';
+import { ProjectStatusType } from '../../common/enums/project';
 import { PythonShell } from 'python-shell';
 import * as path from 'path';
 import { PinataSDK } from 'pinata-web3';
-import { AppConfigService } from 'src/common/config/services/config.service';
+import { AppConfigService } from '../../common/config/services/config.service';
 import { classToPlain } from 'class-transformer';
 import { ProjectService } from '../project/project.service';
 

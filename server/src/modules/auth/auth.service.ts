@@ -87,34 +87,6 @@ export class AuthService {
     });
   }
 
-  public async activateTwoFactorAuth(user: UserEntity): Promise<UserEntity> {
-    return this.userService.changeTwoFactorAuth(user, true);
-  }
-
-  public async deactivateTwoFactorAuth(user: UserEntity): Promise<UserEntity> {
-    // clear the two factor auth secret
-    user.twoFactorAuthSecret = null;
-    return this.userService.changeTwoFactorAuth(user, false);
-  }
-
-  public async authenticateTwoFactor(
-    user: UserEntity,
-    code: string,
-  ): Promise<AuthDto> {
-    const isTwoFaAuthenticated = await this.verifyTwoFaCode(code, user);
-    if (isTwoFaAuthenticated) {
-      await this.activateTwoFactorAuth(user);
-      // send email to notify user that 2fa is enabled
-      await this.sendEmailWithMailType(
-        user,
-        TokenType.EMAIL,
-        MailType.ENABLED_2FA,
-      );
-      return this.auth(user, true);
-    }
-    throw new UnauthorizedException(ErrorAuth.InvalidTwoFactorCode);
-  }
-
   public async auth(
     userEntity: UserEntity,
     isTwoFaAuthenticated: boolean,
@@ -313,12 +285,6 @@ export class AuthService {
     const secret = authenticator.generateSecret();
     const app_name = APP;
     const otpAuthUrl = authenticator.keyuri(user.email, app_name, secret);
-
-    await this.userService.updateTwoFactorAuthSecret(user, secret);
-    return {
-      secret,
-      otpAuthUrl,
-    };
   }
 
   public async qrCodeStreamPipe(stream: Response, otpPathUrl: string) {

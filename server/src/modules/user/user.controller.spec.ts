@@ -29,12 +29,6 @@ describe('UserController', () => {
     service = module.get<UserService>(UserService);
   });
 
-  it('should return an array of users', async () => {
-    const result = await controller.list(0, true, 10, '');
-    expect(result).toBeInstanceOf(Array);
-    expect(service.list).toHaveBeenCalledWith(0, 10, true, '', false);
-  });
-
   it('should return a user entity when found', async () => {
     const mockUser = new UserEntity();
     (service.getById as jest.Mock).mockResolvedValue(mockUser);

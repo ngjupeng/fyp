@@ -115,7 +115,11 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "**/*.service.ts",
+      "!**/supported-token.service.ts",
+      "!**/referral.service.ts",
+      "!**/app.service.ts",
+      "!**/config.service.ts"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"

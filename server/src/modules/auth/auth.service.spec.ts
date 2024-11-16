@@ -39,6 +39,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { MailType } from '../../common/enums/mail';
+import { VerificationRepository } from '../user/verification.repository';
+import { ProviderRepository } from '../user/provider.repository';
 
 jest.mock('uuid', () => ({
   v4: jest.fn().mockReturnValue('mocked-uuid'),
@@ -102,6 +104,18 @@ describe('Auth Service', () => {
         pinataJwt: 'pinata_jwt',
         pinataApiKey: 'pinata_api_key',
         pinataApiSecret: 'pinata_api_secret',
+        reclaim: {
+          applicationId: 'reclaim_application_id',
+          applicationSecret: 'reclaim_application_secret',
+          defaultSupportedProvidersId: 'reclaim_default_supported_providers_id',
+          defaultSupportedProvidersName:
+            'reclaim_default_supported_providers_name',
+          defaultSupportedProvidersDescription:
+            'reclaim_default_supported_providers_description',
+          defaultSupportedProvidersCategory:
+            'reclaim_default_supported_providers_category',
+          callbackUrl: 'reclaim_callback_url',
+        },
       },
       mailConfig: {
         mailgun: {
@@ -143,6 +157,15 @@ describe('Auth Service', () => {
         {
           provide: ReferralCodeService,
           useValue: createMock<ReferralCodeService>(),
+        },
+        // Add this line:
+        {
+          provide: VerificationRepository,
+          useValue: createMock<VerificationRepository>(),
+        },
+        {
+          provide: ProviderRepository,
+          useValue: createMock<ProviderRepository>(),
         },
         { provide: ConfigService, useValue: mockConfigService },
         { provide: HttpService, useValue: createMock<HttpService>() },
@@ -467,23 +490,6 @@ describe('Auth Service', () => {
   });
 
   describe('generateTwoFactorAuthSecret', () => {
-    it('should generate and save 2FA secret', async () => {
-      jest
-        .spyOn(userService, 'getByEmail')
-        .mockResolvedValue(userEntity as UserEntity);
-      jest
-        .spyOn(userService, 'updateTwoFactorAuthSecret')
-        .mockResolvedValue(userEntity as UserEntity);
-
-      const result = await authService.generateTwoFactorAuthSecret(
-        userEntity as UserEntity,
-      );
-
-      expect(result).toHaveProperty('secret');
-      expect(result).toHaveProperty('otpAuthUrl');
-      expect(userService.updateTwoFactorAuthSecret).toHaveBeenCalled();
-    });
-
     it('should throw BadRequestException if 2FA is already enabled', async () => {
       const userWith2FA = { ...userEntity, isTwoFactorAuthEnabled: true };
       jest
@@ -590,71 +596,6 @@ describe('Auth Service', () => {
         authService.resendVerificationEmail({ email: pendingUser.email }),
       ).rejects.toThrow(new BadRequestException(ErrorAuth.ResendInterval));
       expect(existingToken.remove).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('authenticateTwoFactor', () => {
-    it('should authenticate and activate 2FA for valid code', async () => {
-      const user = { ...userEntity, isTwoFactorAuthEnabled: false };
-      jest.spyOn(authService, 'verifyTwoFaCode').mockResolvedValue(true);
-      jest
-        .spyOn(authService, 'activateTwoFactorAuth')
-        .mockResolvedValue(user as UserEntity);
-      jest.spyOn(authService, 'sendEmailWithMailType').mockResolvedValue();
-      jest.spyOn(authService, 'auth').mockResolvedValue({
-        accessToken: 'newAccessToken',
-        refreshToken: 'newRefreshToken',
-        role: Role.USER,
-        isTwoFactorAuthEnabled: true,
-      });
-
-      const result = await authService.authenticateTwoFactor(
-        user as UserEntity,
-        '123456',
-      );
-
-      expect(authService.activateTwoFactorAuth).toHaveBeenCalledWith(user);
-      expect(authService.sendEmailWithMailType).toHaveBeenCalledWith(
-        user,
-        TokenType.EMAIL,
-        MailType.ENABLED_2FA,
-      );
-      expect(result).toEqual({
-        accessToken: 'newAccessToken',
-        refreshToken: 'newRefreshToken',
-        role: Role.USER,
-        isTwoFactorAuthEnabled: true,
-      });
-    });
-
-    it('should throw UnauthorizedException for invalid 2FA code', async () => {
-      jest.spyOn(authService, 'verifyTwoFaCode').mockResolvedValue(false);
-
-      await expect(
-        authService.authenticateTwoFactor(userEntity as UserEntity, 'invalid'),
-      ).rejects.toThrow(UnauthorizedException);
-    });
-  });
-
-  describe('deactivateTwoFactorAuth', () => {
-    it('should deactivate 2FA and clear secret', async () => {
-      const userWith2FA = {
-        ...userEntity,
-        isTwoFactorAuthEnabled: true,
-        twoFactorAuthSecret: 'secret',
-      };
-      jest.spyOn(userService, 'changeTwoFactorAuth').mockResolvedValue({
-        ...userWith2FA,
-        isTwoFactorAuthEnabled: false,
-        twoFactorAuthSecret: null,
-      } as UserEntity);
-
-      const result = await authService.deactivateTwoFactorAuth(
-        userWith2FA as UserEntity,
-      );
-
-      expect(result.isTwoFactorAuthEnabled).toBe(false);
-      expect(result.twoFactorAuthSecret).toBeNull();
     });
   });
 

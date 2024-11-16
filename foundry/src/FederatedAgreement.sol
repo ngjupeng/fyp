@@ -360,6 +360,7 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
     if (amount <= 0) {
       revert NoRewardsAvailable();
     }
+    //
     lastClaimedRound[msg.sender] = round;
     delete rewards[msg.sender];
     payable(address(msg.sender)).transfer(amount);
@@ -466,7 +467,9 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
     for (uint256 i = lastClaimed + 1; i <= round; i++) {
       // Only add rewards if they submitted IPFS hash for that round
       if (bytes(roundIPFSHashes[participant][i]).length > 0) {
-        unclaimedRewards += REWARD_EACH_ROUND;
+        // also need to check how many confirmation that round, then divide by that number,
+        // this is because we need to distribute reward among all the participants who confirmed that round
+        unclaimedRewards = unclaimedRewards + (REWARD_EACH_ROUND / roundStateConfirmedCount[i]);
       }
     }
 
@@ -539,5 +542,9 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
     }
 
     return result;
+  }
+
+  function rewardEachRound() public view returns (uint256) {
+    return REWARD_EACH_ROUND;
   }
 }

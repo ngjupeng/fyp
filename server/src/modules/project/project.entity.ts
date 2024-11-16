@@ -13,7 +13,7 @@ import { BaseEntity } from '../../database/base.entity';
 import { UserEntity } from '../user/user.entity';
 import { RoundEntity } from '../round/round.entity';
 import { ParticipantSubmissionEntity } from '../round/participant-submission.entity';
-import { ProjectStatusType } from 'src/common/enums/project';
+import { ProjectStatusType } from '../../common/enums/project';
 
 @Entity({ name: 'projects' })
 export class ProjectEntity extends BaseEntity {

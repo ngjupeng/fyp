@@ -13,13 +13,13 @@ import {
 } from './project.dto';
 import { UserEntity } from '../user/user.entity';
 import { ProjectRepository } from './project.repository';
-import { ProjectStatusType } from 'src/common/enums/project';
+import { ProjectStatusType } from '../../common/enums/project';
 import { SupportedTokenService } from '../supported-token/supported-token.service';
 import { isURL } from 'class-validator';
 import { isAddress } from 'viem';
 import { ProjectEntity } from './project.entity';
-import { abis } from 'src/common/constants/abis';
-import { publicClient } from 'src/common/viem/public-client';
+import { abis } from '../../common/constants/abis';
+import { publicClient } from '../../common/viem/public-client';
 import { RoundService } from '../round/round.service';
 import { RoundEntity } from '../round/round.entity';
 import { VerificationRepository } from '../user/verification.repository';
@@ -83,6 +83,11 @@ export class ProjectService {
   }
 
   public async joinProject(user: UserEntity, projectId: number): Promise<void> {
+    // if user not bound wallet
+    if (!user.address) {
+      throw new BadRequestException('User has no bound wallet');
+    }
+
     // first check if user has a verified identity
     const verifiedIdentity = await this.verificationRepository.find({
       user: { id: user.id },
@@ -110,10 +115,10 @@ export class ProjectService {
       throw new BadRequestException('Project is already running');
     }
 
-    // check if participants.length is less than maximumParticipantAllowed
-    if (project.participants.length >= project.maximumParticipantAllowed) {
-      throw new BadRequestException('Project is full');
-    }
+    // // check if participants.length is less than maximumParticipantAllowed
+    // if (project.participants.length >= project.maximumParticipantAllowed) {
+    //   throw new BadRequestException('Project is full');
+    // }
 
     // check if user has already joined the project
     const userJoined = project.participants.some(

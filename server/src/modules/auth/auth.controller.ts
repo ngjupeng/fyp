@@ -236,67 +236,6 @@ export class AuthJwtController {
     await this.authService.logout(request.user);
   }
 
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @Get('/gen-qr-code')
-  @HttpCode(200)
-  @ApiOperation({
-    summary: '2fa qr generation',
-    description: 'generates qr code for 2fa',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'QR code generated successfully',
-  })
-  @Header('content-type', 'image/png')
-  public async generateQrCode(
-    @Req() request: RequestWithUser,
-    @Res() response: Response,
-  ): Promise<void> {
-    const { otpAuthUrl } = await this.authService.generateTwoFactorAuthSecret(
-      request.user,
-    );
-    return await this.authService.qrCodeStreamPipe(response, otpAuthUrl);
-  }
-
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @Post('turn-off-2fa')
-  @ApiOperation({
-    summary: 'Disable 2FA',
-    description: 'Disable 2fa for the authenticated user',
-  })
-  @ApiResponse({
-    status: 201,
-    description: '2fa disabled successfully',
-  })
-  async deactivationOfTwoFa(@Req() request: RequestWithUser): Promise<void> {
-    await this.authService.deactivateTwoFactorAuth(request.user);
-  }
-
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @Post('authenticate-2fa')
-  @ApiOperation({
-    summary: 'Authenticate 2FA Code',
-    description:
-      'Verifies the provided 2FA code and completes the 2FA authentication process if the code is valid',
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Authenticated successfully',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Invalid code',
-  })
-  async authenticationOfTwoFa(
-    @Req() request: RequestWithUser,
-    @Body() dto: TwoFaAuthDto,
-  ): Promise<AuthDto> {
-    return await this.authService.authenticateTwoFactor(request.user, dto.code);
-  }
-
   @Public()
   @Post('/resend-verification')
   @ApiBody({ type: ResendVerificationDto })

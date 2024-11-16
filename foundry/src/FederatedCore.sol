@@ -12,10 +12,10 @@ contract FederatedCore is IFederatedCore, Ownable {
 
   uint256 private agreementCount;
 
-  mapping(uint256 => address) private idToAgreement;
-  mapping(address => uint256) private agreementToId;
-  mapping(address => int256) private reputations;
-  mapping(address => bool) private supportedTokens;
+  mapping(uint256 => address) public idToAgreement;
+  mapping(address => uint256) public agreementToId;
+  mapping(address => int256) public reputations;
+  mapping(address => bool) public supportedTokens;
 
   // ************************************
   // ************ MODIFIERs *************
