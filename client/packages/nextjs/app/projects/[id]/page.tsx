@@ -7,8 +7,10 @@ import CreateProposal from "./_components/CreateProposal";
 import PrivateKey from "./_components/PrivateKey";
 import VotingOption from "./_components/VotingOption";
 import { Button } from "@headlessui/react";
+import { JsonRpcProvider } from "ethers";
+import { FhenixClient, getPermit } from "fhenixjs";
 import toast from "react-hot-toast";
-import { formatEther, formatUnits, parseEther } from "viem";
+import { formatEther, formatUnits, keccak256, parseEther, toBytes } from "viem";
 import { useAccount, useReadContract, useSimulateContract, useWriteContract } from "wagmi";
 import Loading from "~~/components/Loading";
 import GlobalContext from "~~/context/GlobalContext";
@@ -19,9 +21,10 @@ import useProjectCurrentRoundDetail from "~~/hooks/server/useProjectCurrentRound
 import useProjectDetails from "~~/hooks/server/useProjectDetails";
 import useProjectPreviousRoundDetail from "~~/hooks/server/useProjectPreviousRoundDetail";
 import useStartProject from "~~/hooks/server/useStartProject";
+import { publicClient } from "~~/services/web3/fhenixClient";
 
 const ProjectDetail = () => {
-  const agreementAbi = deployedContracts[8008135].FederatedAgreement.abi;
+  const agreementAbi = deployedContracts[8008148].FederatedAgreement.abi;
 
   const { id } = useParams();
   const { address } = useAccount();
@@ -102,6 +105,10 @@ const ProjectDetail = () => {
     args: [userCredentials?.address || "0x0"],
   });
 
+  console.log("---------redeemableCollateralIfRandomSampling-----------------------");
+  console.log(redeemableCollateralIfRandomSampling);
+  console.log("--------------------------------");
+
   const {
     data: collaterals,
     isLoading: collateralsLoading,
@@ -132,7 +139,6 @@ const ProjectDetail = () => {
     account: userCredentials.address,
   });
 
-  console.log(privateKey);
   const { writeContractAsync: agreementContractWrite } = useWriteContract();
 
   const { mutate: joinProject, isPending: joinProjectPending } = useJoinProject(
@@ -234,6 +240,36 @@ const ProjectDetail = () => {
         functionName: "confirmRoundState",
         args: [],
       });
+      // get contract address
+      const receipt = await publicClient.getTransactionReceipt({
+        hash: result!,
+      });
+      // Check if any logs match the AgreementProceedNextRound event signature
+      const proceedNextRoundEvent = receipt.logs.find(log => {
+        // Get the event signature for AgreementProceedNextRound(address,uint256)
+        const eventSignature = "AgreementProceedNextRound(address,uint256)";
+        const eventFinishSignature = "AgreementFinished(address,uint256)";
+        const eventHash = keccak256(toBytes(eventSignature));
+        const eventFinishHash = keccak256(toBytes(eventFinishSignature));
+        return log.topics[0] === eventHash || log.topics[0] === eventFinishHash;
+      });
+
+      if (proceedNextRoundEvent) {
+        // Call server endpoint to handle next round
+        try {
+          await fetch(`http://localhost:3001/round/proceed`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              agreementAddress: projectDetail?.agreementAddress,
+            }),
+          });
+        } catch (error) {
+          console.error("Failed to notify server about next round:", error);
+        }
+      }
       await refetchRoundStateConfirmedCount();
       await refetchRoundStateConfirmed();
       toast.success("Confirm state success");
@@ -323,10 +359,36 @@ const ProjectDetail = () => {
     }
   };
 
+  // async function settlePrivateKey(privateKey: any) {
+  //   const encHigh = privateKey?.result[0]["data"];
+  //   const encLow = privateKey?.result[1]["data"];
+  //   const remainder = privateKey?.result[2];
+
+  //   const provider: any = new JsonRpcProvider("https://api.nitrogen.fhenix.zone");
+
+  //   // initialize Fhenix Client
+  //   const client = new FhenixClient({ provider });
+
+  //   try {
+  //     const permit = await getPermit(projectDetail?.agreementAddress || "0x0", provider as any);
+  //     client.storePermit(permit as any, address as any);
+  //     const permission = client.extractPermitPermission(permit as any);
+  //     const data = client.unseal(contractAddress, response);
+
+  //     // let encryptedLast30 = await client.encrypt(last30, EncryptionTypes.uint128);
+  //   } catch (e) {}
+  // }
+
+  useEffect(() => {}, [privateKey]);
+
   return (
     <div className="bg-gray-900">
       <main className="py-6 px-12 space-y-12 min-h-screen w-full">
-        {projectDetailsLoading || reputationLoading || rewardsLoading || collateralsLoading ? (
+        {projectDetailsLoading ||
+        reputationLoading ||
+        rewardsLoading ||
+        collateralsLoading ||
+        redeemableCollateralIfRandomSamplingFailureLoading ? (
           <div className="flex justify-center mt-10">
             <Loading />
           </div>
@@ -340,9 +402,9 @@ const ProjectDetail = () => {
                   <div>
                     {projectDetail?.participants.find(participant => participant.address == userCredentials.address) ? (
                       <PrivateKey
-                        privateKey={(privateKey?.result[0]?.toString().padStart(16, "0") ?? "")
+                        privateKey={(privateKey?.result[0]["data"].toString().padStart(16, "0") ?? "")
                           .concat(privateKey?.result[2]?.toString() ?? "")
-                          .concat(privateKey?.result[1]?.toString().padStart(16, "0") ?? "")}
+                          .concat(privateKey?.result[1]["data"].toString().padStart(16, "0") ?? "")}
                       />
                     ) : (
                       <div></div>
@@ -389,6 +451,7 @@ const ProjectDetail = () => {
               </div>
               {/* <!-- projects --> */}
               <div className="container mx-auto">
+                <p>Your Reputation: {reputation?.toString()}</p>
                 <p>{projectDetail?.description}</p>
 
                 <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
@@ -601,14 +664,16 @@ const ProjectDetail = () => {
                             participant Submission
                           </h3>
                           <div className="flex gap-3">
-                            {roundStateConfirmed == false && projectDetail?.status.toLowerCase() === "running" && (
-                              <Button
-                                onClick={handleConfirmState}
-                                className="rounded-md bg-black/20 py-2 px-4 text-sm font-medium text-white focus:outline-none data-[hover]:bg-black/30 data-[focus]:outline-1 data-[focus]:outline-white"
-                              >
-                                Confirm State
-                              </Button>
-                            )}
+                            {roundStateConfirmed == false &&
+                              projectDetail?.status.toLowerCase() === "running" &&
+                              redeemableCollateralIfRandomSampling! <= 0 && (
+                                <Button
+                                  onClick={handleConfirmState}
+                                  className="rounded-md bg-black/20 py-2 px-4 text-sm font-medium text-white focus:outline-none data-[hover]:bg-black/30 data-[focus]:outline-1 data-[focus]:outline-white"
+                                >
+                                  Confirm State
+                                </Button>
+                              )}
                             <AddSubmission
                               g={projectDetail?.g}
                               n={projectDetail?.n}

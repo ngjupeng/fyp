@@ -1,7 +1,7 @@
 export const abis = {
   federatedCore: {
-    name: '0x4Eb9Ec1366De3256f035E24b268249c29dA7e08e',
-    address: '0xcb6cDd4bb2F7b69992Fa901E3C20F23B2Ce9829a',
+    name: '0x301E169457F261caFF0498B59eDC203950eCF6D4',
+    address: '0x301E169457F261caFF0498B59eDC203950eCF6D4',
     abi: {
       abi: [
         {

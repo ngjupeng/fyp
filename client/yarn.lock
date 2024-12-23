@@ -1936,7 +1936,7 @@ __metadata:
     eslint-config-prettier: ^8.5.0
     eslint-plugin-prettier: ^4.2.1
     ethers: ^6.13.4
-    fhenixjs: 0.2.1
+    fhenixjs: ^0.4.1
     next: ^14.0.4
     next-themes: ^0.2.1
     nprogress: ^0.2.0
@@ -2350,6 +2350,15 @@ __metadata:
   version: 17.0.45
   resolution: "@types/node@npm:17.0.45"
   checksum: aa04366b9103b7d6cfd6b2ef64182e0eaa7d4462c3f817618486ea0422984c51fc69fd0d436eae6c9e696ddfdbec9ccaa27a917f7c2e8c75c5d57827fe3d95e8
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:^20.0.0":
+  version: 20.17.10
+  resolution: "@types/node@npm:20.17.10"
+  dependencies:
+    undici-types: ~6.19.2
+  checksum: 44cfa7cd9a4ebb8f74efa4b89cf963ca0e522121a7d24d8121d40872bbcfd607eaccdc203c4fe92c8b587125be9ca7b071fe4f9b356f263434b8a8512dbebef0
   languageName: node
   linkType: hard
 
@@ -5670,7 +5679,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ethers@npm:^6.13.4, ethers@npm:^6.9.1":
+"ethers@npm:^6.13.4":
   version: 6.13.4
   resolution: "ethers@npm:6.13.4"
   dependencies:
@@ -5924,16 +5933,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fhenixjs@npm:0.2.1":
-  version: 0.2.1
-  resolution: "fhenixjs@npm:0.2.1"
+"fhenixjs@npm:^0.4.1":
+  version: 0.4.1
+  resolution: "fhenixjs@npm:0.4.1"
   dependencies:
-    ethers: ^6.9.1
-    node-tfhe: ^0.6.1
-    tfhe: ^0.6.1
+    "@types/node": ^20.0.0
     tweetnacl: ^1.0.3
     tweetnacl-util: ^0.15.1
-  checksum: baa058bdaf158ac2486cd39b1271244fda20a5c20cf0f2da042710c6ef289a6052345caf6336060e826363d06cbdb9d4130f0b87aba80ef52098a341243f5382
+  checksum: fa30c49a762ec1d777071049047561bddbd1f6920ac79e8e838b0735b76252e5b2bf23187b7eb540dc14d38664c457a256b641246f377386e3463a7a8fc0d9bd
   languageName: node
   linkType: hard
 
@@ -8340,13 +8347,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-tfhe@npm:^0.6.1":
-  version: 0.6.4
-  resolution: "node-tfhe@npm:0.6.4"
-  checksum: 9be1184e3aa2873ba0e66f2481ce769336d047e4928927b88516b89070bc52868ae4b1265bee72db6efc1156198101acf0b6eca3cc6f275311b32d625baecedd
-  languageName: node
-  linkType: hard
-
 "nopt@npm:^5.0.0":
   version: 5.0.0
   resolution: "nopt@npm:5.0.0"
@@ -10455,13 +10455,6 @@ __metadata:
   version: 0.2.0
   resolution: "text-table@npm:0.2.0"
   checksum: b6937a38c80c7f84d9c11dd75e49d5c44f71d95e810a3250bd1f1797fc7117c57698204adf676b71497acc205d769d65c16ae8fa10afad832ae1322630aef10a
-  languageName: node
-  linkType: hard
-
-"tfhe@npm:^0.6.1":
-  version: 0.6.4
-  resolution: "tfhe@npm:0.6.4"
-  checksum: f39cab37db25b069f391c812eed3d7ffc9d4870212b51e16140ec4159df2e0328a0755bb7fe78d6a36cb95ad144e3eeb786b7a2d6b94ccc0b180f405a10abd3f
   languageName: node
   linkType: hard
 

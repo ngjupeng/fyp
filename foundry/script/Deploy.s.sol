@@ -13,7 +13,7 @@ contract Deploy is Script {
   // <PRIVATE_KEY> --skip-simulation --verify --verifier blockscout
   // --verifier-url https://explorer.helium.fhenix.zone/api/
 
-  // cast call --rpc-url https://api.helium.fhenix.zone 0x6aE373532f9AC843aB9Acf3Ded60DF90220738be "owner()(address)"
+  // cast call --rpc-url https://api.nitrogen.fhenix.zone 0x72D7cC61a6660b1c3c8Cc912176061EC388e1043 "REWARD_EACH_ROUND()"
 
   // cast send --private-key <PRIVATE_KEY> --rpc-url
   // https://api.helium.fhenix.zone 0x3fEE97a3D244e7bD9aA68a93DeB50969dedb67a7  "proceedNextRoundSandbox()"

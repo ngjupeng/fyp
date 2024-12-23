@@ -2,21 +2,21 @@ import { defineChain } from "viem";
 import * as chains from "viem/chains";
 
 export const fhenix = defineChain({
-  id: 8008135,
+  id: 8008148,
   name: "fhenix",
   nativeCurrency: {
     decimals: 18,
     name: "Ether",
-    symbol: "tFHE",
+    symbol: "FHE",
   },
   rpcUrls: {
     default: {
-      http: ["https://api.helium.fhenix.zone"],
-      webSocket: ["wss://api.helium.fhenix.zone:8548"],
+      http: ["https://api.nitrogen.fhenix.zone"],
+      webSocket: ["wss://api.nitrogen.fhenix.zone:8548"],
     },
   },
   blockExplorers: {
-    default: { name: "Explorer", url: "https://explorer.helium.fhenix.zone" },
+    default: { name: "Explorer", url: "https://explorer.nitrogen.fhenix.zone" },
   },
   contracts: {},
 });

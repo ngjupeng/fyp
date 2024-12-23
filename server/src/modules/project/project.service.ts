@@ -94,11 +94,11 @@ export class ProjectService {
       count: MoreThan(0),
     });
 
-    if (verifiedIdentity.length < 2) {
-      throw new BadRequestException(
-        'User has no verified identity, please verify your identity first',
-      );
-    }
+    // if (verifiedIdentity.length < 2) {
+    //   throw new BadRequestException(
+    //     'User has no verified identity, please verify your identity first',
+    //   );
+    // }
 
     // get project
     const project = await this.projectRepository.findOne(

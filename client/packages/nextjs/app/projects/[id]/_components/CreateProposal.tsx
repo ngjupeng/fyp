@@ -19,7 +19,7 @@ export default function CreateProposal({
   refetchProposals,
   projectStatus,
 }: CreateProposalProps) {
-  const agreementAbi = deployedContracts[8008135].FederatedAgreement.abi;
+  const agreementAbi = deployedContracts[8008148].FederatedAgreement.abi;
 
   let [isOpen, setIsOpen] = useState(false);
   let [suspiciousAddress, setSuspiciousAddress] = useState("");

@@ -123,7 +123,7 @@ async function bootstrap() {
     await projectService.watchProjectFinishEvent();
 
     const roundService = app.get(RoundService);
-    await roundService.watchNextRoundEvent();
+    // await roundService.watchNextRoundEvent();
   });
 }
 bootstrap();

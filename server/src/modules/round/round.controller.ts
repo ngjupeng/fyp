@@ -41,6 +41,20 @@ export class RoundController {
     return this.roundService.addSubmission(body, req.user);
   }
 
+  @ApiOperation({ summary: 'Proceed to next round' })
+  @ApiResponse({
+    status: 200,
+    description: 'Proceed to next round successfully',
+  })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  @Post('/proceed')
+  public async proceedNextRound(
+    @Body() body: { agreementAddress: string },
+  ): Promise<void> {
+    return this.roundService.proceedToNextRoundEndpoint(body.agreementAddress);
+  }
+
   // get round detail and all submission for that round
   @ApiOperation({
     summary: 'Get round detail and all submission for that round',

@@ -60,6 +60,13 @@ export class RoundService {
     });
   }
 
+  public async proceedToNextRoundEndpoint(
+    agreementAddress: string,
+  ): Promise<any> {
+    // get the project
+    await this.proceedToNextRound(agreementAddress);
+  }
+
   // create new round for a project
   // need to watch for the event for creating new round when people calling confirm round state on contract
   public async watchNextRoundEvent(): Promise<any> {

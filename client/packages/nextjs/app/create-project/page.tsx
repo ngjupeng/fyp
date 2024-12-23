@@ -17,9 +17,9 @@ import { publicClient } from "~~/services/web3/fhenixClient";
 
 const CreateProject = () => {
   const router = useRouter();
-  const agreementAbi = deployedContracts[8008135].FederatedAgreement.abi;
-  const coreAddress = deployedContracts[8008135].FederatedCore.address;
-  const coreAbi = deployedContracts[8008135].FederatedCore.abi;
+  const agreementAbi = deployedContracts[8008148].FederatedAgreement.abi;
+  const coreAddress = deployedContracts[8008148].FederatedCore.address;
+  const coreAbi = deployedContracts[8008148].FederatedCore.abi;
 
   let isAgreementCreated = false;
 
@@ -75,9 +75,9 @@ const CreateProject = () => {
     error => {
       console.log(error);
       if (typeof error.response.data.message == "string") {
-        toast.error(error.response.data.message);
+        // toast.error(error.response.data.message);
       } else {
-        toast.error("Create project failed");
+        // toast.error("Create project failed");
       }
     },
   );
@@ -90,26 +90,26 @@ const CreateProject = () => {
     account: userCredentials.address,
   });
 
-  const unwatch = publicClient.watchContractEvent({
-    address: coreAddress,
-    abi: coreAbi,
-    eventName: "AgreementCreated",
-    args: {
-      owner: userCredentials.address,
-    },
-    onLogs(logs: any) {
-      const log = logs[0];
-      if (!isAgreementCreated) {
-        const agreementAddress = log?.args?.agreement;
-        setAgreementAddress(agreementAddress);
-        createProject({
-          ...projectDetails,
-          agreementAddress: agreementAddress,
-        });
-        isAgreementCreated = true;
-      }
-    },
-  });
+  // const unwatch = publicClient.watchContractEvent({
+  //   address: coreAddress,
+  //   abi: coreAbi,
+  //   eventName: "AgreementCreated",
+  //   args: {
+  //     owner: userCredentials.address,
+  //   },
+  //   onLogs(logs: any) {
+  //     const log = logs[0];
+  //     if (!isAgreementCreated) {
+  //       const agreementAddress = log?.args?.agreement;
+  //       setAgreementAddress(agreementAddress);
+  //       createProject({
+  //         ...projectDetails,
+  //         agreementAddress: agreementAddress,
+  //       });
+  //       isAgreementCreated = true;
+  //     }
+  //   },
+  // });
 
   const handleCreateAgreement = async () => {
     const { totalRewardAmount, collateralAmount, maximumParticipantAllowed, minimumReputation, maximumRounds } =
@@ -123,7 +123,7 @@ const CreateProject = () => {
     try {
       console.log(projectDetails);
       const value = Number(projectDetails.collateralAmount) + Number(projectDetails.totalRewardAmount);
-      await coreContractWrite({
+      const res = await coreContractWrite({
         functionName: "createAgreement",
         args: [
           owner,
@@ -137,6 +137,22 @@ const CreateProject = () => {
         ],
         value: parseEther(String(value)),
       });
+
+      console.log(res);
+      const receipt = await publicClient.getTransactionReceipt({
+        hash: res!,
+      });
+      const agreementAddress: any = receipt.logs[0].topics[1];
+      console.log(receipt);
+      const validAddress = agreementAddress.slice(-40); // Get last 40 characters
+      const formattedAddress: any = `0x${validAddress}`;
+      setAgreementAddress(formattedAddress);
+      console.log(formattedAddress);
+      await createProject({
+        ...projectDetails,
+        agreementAddress: formattedAddress,
+      });
+      isAgreementCreated = true;
     } catch (e) {
       console.log(e);
       console.error("Error create agreement:", e);
@@ -145,7 +161,7 @@ const CreateProject = () => {
 
   const handleSetPrivateKey = async () => {
     // initialize your web3 provider
-    const provider = new JsonRpcProvider("https://api.helium.fhenix.zone");
+    const provider = new JsonRpcProvider("https://api.nitrogen.fhenix.zone");
 
     // initialize Fhenix Client
     const client = new FhenixClient({ provider });
@@ -264,8 +280,10 @@ const CreateProject = () => {
             // and for the remaining decimals, keep it at max two decimal places, for example 0.123456789 -> 0.12
             const multipliedArray = flattenedArray.map(num => {
               num = Number((num + OFFSET) * BASIS_POINT);
+              num = Number(num.toFixed(2));
               return num;
             });
+            console.log(multipliedArray);
 
             const { phi, g, n } = await generateKeypair();
             setPhi(phi);
@@ -278,6 +296,12 @@ const CreateProject = () => {
             const data = await response.json();
             const array = data?.decryptedArray?.split("|");
             console.log(array);
+
+            // recalculate the array
+            const recalculatedArray = array.map((num: any, index: any) => {
+              return Number(num) / BASIS_POINT - OFFSET;
+            });
+            console.log(recalculatedArray);
 
             const ipfsHash = await uploadToIPFS(model_name, encryptedArray);
 

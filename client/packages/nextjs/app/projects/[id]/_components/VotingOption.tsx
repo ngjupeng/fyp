@@ -13,7 +13,7 @@ interface VotingOptionProps {
 
 const VotingOption = ({ proposal, index, agreementAddress, handleVote }: VotingOptionProps) => {
   const { address } = useAccount();
-  const agreementAbi = deployedContracts[8008135].FederatedAgreement.abi;
+  const agreementAbi = deployedContracts[8008148].FederatedAgreement.abi;
 
   const { writeContractAsync: agreementContractWrite } = useWriteContract();
 

@@ -12,7 +12,7 @@ interface PrivateKeyProps {
 }
 
 export default function PrivateKey({ privateKey }: PrivateKeyProps) {
-  const agreementAbi = deployedContracts[8008135].FederatedAgreement.abi;
+  const agreementAbi = deployedContracts[8008148].FederatedAgreement.abi;
 
   let [isOpen, setIsOpen] = useState(false);
 

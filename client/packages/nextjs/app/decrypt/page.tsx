@@ -51,8 +51,11 @@ const Decrypt = () => {
     });
     const data = await response.json();
     const array = data?.decryptedArray?.split("|");
-    const decryptedArray = array.map((num: any) => {
-      return Number(num) / (BASIS_POINT * BASIS_POINT) - OFFSET;
+    // const decryptedArray = array.map((num: any) => {
+    //   return Number(num) / (BASIS_POINT * BASIS_POINT) - OFFSET;
+    // });
+    const decryptedArray = array.map((num: any, index: any) => {
+      return Number(num) / BASIS_POINT - OFFSET;
     });
 
     setDecryptedArray(decryptedArray);

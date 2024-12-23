@@ -5,9 +5,9 @@
 import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 
 const deployedContracts = {
-  8008135: {
+  8008148: {
     FederatedCore: {
-      address: "0xcb6cDd4bb2F7b69992Fa901E3C20F23B2Ce9829a",
+      address: "0x301E169457F261caFF0498B59eDC203950eCF6D4",
       abi: [
         {
           type: "constructor",
@@ -303,8 +303,8 @@ const deployedContracts = {
           name: "getPrivateKey",
           inputs: [],
           outputs: [
-            { name: "", type: "uint128", internalType: "uint128" },
-            { name: "", type: "uint128", internalType: "uint128" },
+            { name: "", type: "uint256", internalType: "uint256" },
+            { name: "", type: "uint256", internalType: "uint256" },
             { name: "", type: "string", internalType: "string" },
           ],
           stateMutability: "nonpayable",
@@ -439,6 +439,13 @@ const deployedContracts = {
           stateMutability: "nonpayable",
         },
         { type: "function", name: "redeemRewards", inputs: [], outputs: [], stateMutability: "nonpayable" },
+        {
+          type: "function",
+          name: "rewardEachRound",
+          inputs: [],
+          outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
+          stateMutability: "view",
+        },
         {
           type: "function",
           name: "rewards",

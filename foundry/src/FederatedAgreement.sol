@@ -143,9 +143,19 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
       revert InvalidAgreementStatus();
     }
 
+    // loop to make all participant, isParticipant = false
+    for (uint256 i = 0; i < participants.length; i++) {
+      isParticipant[participants[i]] = false;
+    }
+
     // if participants is more than maximum participants, random sampling maximum participants
     if (participants.length > MAXIMUM_PARTICIPANTS) {
       participants = _randomSampling(MAXIMUM_PARTICIPANTS);
+    }
+
+    // loop to make all participant, isParticipant = true
+    for (uint256 i = 0; i < participants.length; i++) {
+      isParticipant[participants[i]] = true;
     }
 
     status = FederatedAgreementStatus.RUNNING;
@@ -368,17 +378,13 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
     emit RewardsRedeemed(msg.sender, round, amount);
   }
 
-  function getPrivateKey() public onlyRunning returns (uint128, uint128, string memory) {
+  function getPrivateKey() public onlyRunning returns (uint256, uint256, string memory) {
     // check is participant
     _requiredParticipant(msg.sender);
-    // uint128 highPrivateKey = FHE.decrypt(FHE.asEuint128(encHighPrivateKey));
-    // uint128 lowPrivateKey = FHE.decrypt(FHE.asEuint128(encLowPrivateKey));
-    // return (highPrivateKey, lowPrivateKey, remainderPrivateKey);
-    return (
-      FHE.decrypt(FHE.asEuint128(encHighPrivateKey)),
-      FHE.decrypt(FHE.asEuint128(encLowPrivateKey)),
-      remainderPrivateKey
-    );
+    uint128 highPrivateKey = FHE.decrypt(FHE.asEuint128(encHighPrivateKey));
+    uint128 lowPrivateKey = FHE.decrypt(FHE.asEuint128(encLowPrivateKey));
+    return (highPrivateKey, lowPrivateKey, remainderPrivateKey);
+    // return (encHighPrivateKey, encLowPrivateKey, remainderPrivateKey);
   }
 
   function getProposals() public view returns (Proposal[] memory) {
@@ -464,7 +470,7 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
     uint256 unclaimedRewards = 0;
 
     // Check each round for IPFS submission
-    for (uint256 i = lastClaimed + 1; i <= round; i++) {
+    for (uint256 i = lastClaimed; i < round; i++) {
       // Only add rewards if they submitted IPFS hash for that round
       if (bytes(roundIPFSHashes[participant][i]).length > 0) {
         // also need to check how many confirmation that round, then divide by that number,
@@ -527,18 +533,33 @@ contract FederatedAgreement is Permissioned, Initializable, IFederatedAgreementT
     uint256 n = currentParticipants.length;
     address[] memory result = new address[](sampleSize);
 
-    // Fisher-Yates shuffle algorithm with random selection
-    for (uint256 i = 0; i < sampleSize; i++) {
-      // Generate random index based on block properties
-      uint256 j = i + (uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao, i))) % (n - i));
+    // Always include owner as first participant
+    result[0] = owner;
+
+    // Adjust sampleSize to account for owner
+    uint256 remainingSamples = sampleSize - 1;
+
+    // Create a temporary array excluding the owner
+    address[] memory tempParticipants = new address[](n - 1);
+    uint256 tempIndex = 0;
+    for (uint256 i = 0; i < n; i++) {
+      if (currentParticipants[i] != owner) {
+        tempParticipants[tempIndex] = currentParticipants[i];
+        tempIndex++;
+      }
+    }
+
+    // Fisher-Yates shuffle algorithm with random selection for remaining spots
+    for (uint256 i = 0; i < remainingSamples; i++) {
+      uint256 j = i + (uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao, i))) % (n - 1 - i));
 
       // Swap elements
-      address temp = currentParticipants[i];
-      currentParticipants[i] = currentParticipants[j];
-      currentParticipants[j] = temp;
+      address temp = tempParticipants[i];
+      tempParticipants[i] = tempParticipants[j];
+      tempParticipants[j] = temp;
 
       // Add selected participant to result
-      result[i] = currentParticipants[i];
+      result[i + 1] = tempParticipants[i];
     }
 
     return result;
