@@ -1,11 +1,12 @@
-# Foundry Template [![Open in Gitpod][gitpod-badge]][gitpod] [![Github Actions][gha-badge]][gha] [![Foundry][foundry-badge]][foundry] [![License: MIT][license-badge]][license]
+# Foundry Template [![Open in Gitpod][gitpod-badge]][gitpod] [![Open in Codeanywhere][codeanywhere-badge]][codeanywhere] [![Github Actions][gha-badge]][gha] [![Foundry][foundry-badge]][foundry] [![License: MIT][license-badge]][license]
 
 [gitpod]: https://gitpod.io/#https://github.com/fhenixprotocol/fhenix-foundry-template
 [gitpod-badge]: https://img.shields.io/badge/Gitpod-Open%20in%20Gitpod-FFB45B?logo=gitpod
+[codeanywhere]: https://app.codeanywhere.com/#https://github.com/fhenixprotocol/fhenix-foundry-template
+[codeanywhere-badge]: https://img.shields.io/badge/Codeanywhere-Open%20in%20Codeanywhere-1EAEDB?logo=codeanywhere
 [gha]: https://github.com/fhenixprotocol/fhenix-foundry-template/actions
 [gha-badge]: https://github.com/fhenixprotocol/fhenix-foundry-template/actions/workflows/ci.yml/badge.svg
 [foundry]: https://getfoundry.sh/
-[foundry-badge]: https://img.shields.io/badge/Built%20with-Foundry-FFDB1C.svg
 [license]: https://opensource.org/licenses/MIT
 [license-badge]: https://img.shields.io/badge/License-MIT-blue.svg
 
